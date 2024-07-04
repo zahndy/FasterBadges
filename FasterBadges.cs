@@ -18,7 +18,7 @@ namespace FasterBadges
         public override String Name => "FasterBadges";
         public override String Author => "zahndy";
         public override String Link => "-";
-        public override String Version => "0.0.1";
+        public override String Version => "1.0.0";
 
         public static ModConfiguration Config;
 
