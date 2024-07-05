@@ -17,8 +17,8 @@ namespace FasterBadges
     {
         public override String Name => "FasterBadges";
         public override String Author => "zahndy";
-        public override String Link => "-";
-        public override String Version => "1.0.0";
+        public override String Link => "https://github.com/zahndy/FasterBadges";
+        public override String Version => "1.1.0";
 
         public static ModConfiguration Config;
 
@@ -35,34 +35,48 @@ namespace FasterBadges
             harmony.PatchAll();
         }
 
-        [HarmonyPatch(typeof(SpawnHelper))]
-        class SpawnHelper_OnUserSpawn_Patch
+        [HarmonyPatch(typeof(AvatarBadgeManager))]
+        class AvatarBadgeManager_OnAttach_Patch
         {
             [HarmonyPrefix]
-            [HarmonyPatch("Spawn")]
-            static void Postfix(UserRoot userRoot) 
+            [HarmonyPatch("OnAttach")]
+            static void Prefix(AvatarBadgeManager __instance) 
             {
+                User user = __instance.Slot.ActiveUser;
+                UserRoot userRoot = user.Root;
+
                 if (Config.GetValue(ENABLED)) 
                 {
-                    if (userRoot.ActiveUser.UserName != null)
+                    if (user.UserName != null)
                     {
-                        if (userRoot.ActiveUser.IsLocalUser)
+                        if (user.IsLocalUser)
                         {
                             String[] Badges = Config.GetValue(BadgesVar).Split(',');
-                            if (Badges.Length > 0)
+                            if (Badges.Count() > 0)
                             {
                                 AvatarManager avatarManager = userRoot.Slot.GetComponent<AvatarManager>();
-                                TextureFilterMode textureFilterMode = TextureFilterMode.Bilinear;
-                                BlendMode? blendMode = new BlendMode?();
-                                colorX? tint = new colorX?();
-                                int filterMode = (int)textureFilterMode;
-                                int? maxSize = new int?(128);
-                                foreach (String customBadge in Badges)
-                                {
-                                    Uri url = new Uri(customBadge);
-                                    avatarManager.AddIconBadge(url, "Extra Custom Badge-"+ customBadge.Substring(customBadge.Length-10,5), blendMode, tint, (TextureFilterMode)filterMode, maxSize);
+                                if (avatarManager != null)
+                                {                       
+                                    int getFlag = user.LocalUserRoot.Slot.GetChildrenWithTag("CustomBadgesFlag").Count();
+
+                                    if (getFlag < 1)
+                                    {
+                                        Slot FlagSlot = user.LocalUserRoot.Slot.AddSlot("CustomBadgesFlag");
+                                        FlagSlot.Tag = "CustomBadgesFlag";
+                                        Msg(" --- Adding Custom Badges --- ");
+                                        TextureFilterMode textureFilterMode = TextureFilterMode.Bilinear;
+                                        BlendMode? blendMode = new BlendMode?();
+                                        colorX? tint = new colorX?();
+                                        int filterMode = (int)textureFilterMode;
+                                        int? maxSize = new int?(128);
+                                        foreach (String customBadge in Badges)
+                                        {
+                                            Uri url = new Uri(customBadge);
+                                            avatarManager.AddIconBadge(url, "Extra Custom Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, (TextureFilterMode)filterMode, maxSize);
+                                        }
+                                    }
+                                    // avatarManager.UpdateBadges();
                                 }
-                                avatarManager.UpdateBadges();
                             }
                         }
                     }
