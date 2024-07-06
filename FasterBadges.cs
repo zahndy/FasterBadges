@@ -58,21 +58,18 @@ namespace FasterBadges
                                 if (avatarManager != null)
                                 {                       
                                     int getFlag = user.LocalUserRoot.Slot.GetChildrenWithTag("CustomBadgesFlag").Count();
-
                                     if (getFlag < 1)
                                     {
                                         Slot FlagSlot = user.LocalUserRoot.Slot.AddSlot("CustomBadgesFlag");
                                         FlagSlot.Tag = "CustomBadgesFlag";
                                         Msg(" --- Adding Custom Badges --- ");
-                                        TextureFilterMode textureFilterMode = TextureFilterMode.Bilinear;
                                         BlendMode? blendMode = new BlendMode?();
                                         colorX? tint = new colorX?();
-                                        int filterMode = (int)textureFilterMode;
                                         int? maxSize = new int?(128);
                                         foreach (String customBadge in Badges)
                                         {
                                             Uri url = new Uri(customBadge);
-                                            avatarManager.AddIconBadge(url, "Extra Custom Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, (TextureFilterMode)filterMode, maxSize);
+                                            avatarManager.AddIconBadge(url, "Extra Custom Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
                                         }
                                     }
                                     // avatarManager.UpdateBadges();
