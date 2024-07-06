@@ -3,6 +3,8 @@
 A [ResoniteModLoader](https://github.com/resonite-modding-group/ResoniteModLoader) mod for [Resonite](https://resonite.com/) that Injects configurable Badges Into the local user<br>
 Requires ResoniteModSettings in order to set the badges string<br>
 badges string is formatted as a comma separated list of resdb: strings.
+For example:
+resdb:///515d6210069e5e0a498894d93735ab14fbd68a183a47c1d71a96caa3aba1a786.webp,resdb:///0e33a4809f27cfd1004e9a622efa615c0adec1ba2efb381c0d14db866c3042a5.webp
 
 ## Installation
 1. Install [ResoniteModLoader](https://github.com/resonite-modding-group/ResoniteModLoader).
