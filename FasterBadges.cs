@@ -27,11 +27,13 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<string> BadgesVar = new ModConfigurationKey<string>("BadgesVar", "List of badges(csv)", () => "");
 
+        private static HashSet<AvatarManager> Avatars;
         public override void OnEngineInit()
         {
             Config = GetConfiguration();
             Config.Save(true);
             Harmony harmony = new Harmony("com.zahndy.FasterBadges");
+            Avatars = new HashSet<AvatarManager>();
             harmony.PatchAll();
         }
 
@@ -42,11 +44,9 @@ namespace FasterBadges
             [HarmonyPatch("OnAttach")]
             static void Prefix(AvatarBadgeManager __instance) 
             {
-                User user = __instance.Slot.ActiveUser;
-                UserRoot userRoot = user.Root;
-
                 if (Config.GetValue(ENABLED)) 
                 {
+                    User user = __instance.Slot.ActiveUser;
                     if (user.UserName != null)
                     {
                         if (user.IsLocalUser)
@@ -54,14 +54,13 @@ namespace FasterBadges
                             String[] Badges = Config.GetValue(BadgesVar).Split(',');
                             if (Badges.Count() > 0)
                             {
+                                UserRoot userRoot = user.Root;
                                 AvatarManager avatarManager = userRoot.Slot.GetComponent<AvatarManager>();
                                 if (avatarManager != null)
-                                {                       
-                                    int getFlag = user.LocalUserRoot.Slot.GetChildrenWithTag("CustomBadgesFlag").Count();
-                                    if (getFlag < 1)
+                                {  
+                                    if (!Avatars.Contains(avatarManager))
                                     {
-                                        Slot FlagSlot = user.LocalUserRoot.Slot.AddSlot("CustomBadgesFlag");
-                                        FlagSlot.Tag = "CustomBadgesFlag";
+                                        Avatars.Add(avatarManager);
                                         Msg(" --- Adding Custom Badges --- ");
                                         BlendMode? blendMode = new BlendMode?();
                                         colorX? tint = new colorX?();
@@ -71,6 +70,10 @@ namespace FasterBadges
                                             Uri url = new Uri(customBadge);
                                             avatarManager.AddIconBadge(url, "Extra Custom Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
                                         }
+                                    }
+                                    else 
+                                    { 
+                                        Msg(" --- Badges already added to this avatarManager --- "); 
                                     }
                                     // avatarManager.UpdateBadges();
                                 }
