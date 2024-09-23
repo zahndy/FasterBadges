@@ -60,6 +60,7 @@ namespace FasterBadges
                                 {  
                                     if (!Avatars.Contains(avatarManager))
                                     {
+                                        avatarManager.Disposing += (field) => { Avatars.Remove(avatarManager); };
                                         Avatars.Add(avatarManager);
                                         Msg(" --- Adding Custom Badges --- ");
                                         BlendMode? blendMode = new BlendMode?();
