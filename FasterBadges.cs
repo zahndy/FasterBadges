@@ -111,26 +111,27 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Transgender = new ModConfigurationKey<bool>("Transgender", "Transgender", () => false);
 
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv)", () => "");   
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<string> BadgesVarInternalSlots = new ModConfigurationKey<string>("BadgesVarInternalSlots", "List of custom badges(csv)", () => "", internalAccessOnly: true);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<string> BadgesVarInternalNames = new ModConfigurationKey<string>("BadgesVarInternalNames", "List of custom badges(csv)", () => "", internalAccessOnly: true);
+        private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv)", () => "");
 
-        private static List<String> BadgesListSlots;
-        private static List<Uri> BadgesListUri;
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<string> BadgesVarInternalNames = new ModConfigurationKey<string>("BadgesVarInternalNames", "(csv)", () => "", internalAccessOnly: true);
+
+        private static List<String> BadgesListNames;
 
         private static ModConfigurationKey<bool> changedvar = null;
         private static Uri url = null;
         private static bool skip = false;
         private static HashSet<AvatarManager> Avatars;
+
+        private static BlendMode? blendMode = new BlendMode?();
+        private static colorX? tint = new colorX?();
+        private static int? maxSize = new int?(128);
         public override void OnEngineInit()
         {
             Config = GetConfiguration();
             Config.OnThisConfigurationChanged += OnThisConfigurationChanged;
             Config.Save(true);
-            BadgesListSlots = Config.GetValue(BadgesVarInternalSlots).Split(',').ToList();
-            
+            BadgesListNames = Config.GetValue(BadgesVarInternalNames).Split(',').ToList();
             Harmony harmony = new Harmony("com.zahndy.FasterBadges");
             Avatars = new HashSet<AvatarManager>();
             harmony.PatchAll();
@@ -286,11 +287,143 @@ namespace FasterBadges
         }
         private void OnThisConfigurationChanged(ConfigurationChangedEvent configurationChangedEvent)
         {
-           
 
-            Msg(" --- configurationChangedEvent.Key.Name: "+ configurationChangedEvent.Key.Name + " --- ");
-            BadgesSwitch(configurationChangedEvent.Key.Name);
-                   
+            Msg(" --- configurationChangedEvent.Key.Name: " + configurationChangedEvent.Key.Name + " --- ");
+            if (configurationChangedEvent.Key == ENABLED) 
+            {
+                if (Config.GetValue(ENABLED))
+                {
+                    Msg(" --- ENABLED: {0} --- ", Config.GetValue(ENABLED));
+
+                    foreach (string badge in BadgesListNames) 
+                    {
+                        BadgesSwitch(badge);
+                        UpdateBadges(badge); 
+                    }
+
+                    List<String> CustomBadgesList = Config.GetValue(CustomBadges).Split(',').ToList();
+                    Msg(" --- Adding  CustomBadges --- ");
+                    Msg(" --- CustomBadgesList.Count: {0} --- ", CustomBadgesList.Count);
+                    if (CustomBadgesList.Count > 0)
+                    {
+                        foreach (String customBadge in CustomBadgesList)
+                        {
+                            Msg(" --- customBadge.Length:{0} --- ", customBadge.Length);
+                            if (customBadge.Length > 1)
+                            {
+                                Uri burl = new Uri(customBadge);
+                                foreach (AvatarManager av in Avatars)
+                                {
+                                    av.Slot.RunSynchronously(delegate
+                                    {
+                                        av.AddIconBadge(burl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                else 
+                {
+                    CleanBadges();
+                }
+                
+            }
+            else if (configurationChangedEvent.Key != BadgesVarInternalNames)
+            { 
+                String badgeName = configurationChangedEvent.Key.Name;
+                BadgesSwitch(badgeName);
+                UpdateBadges(badgeName);
+                //Config.Save();
+            }
+        }
+
+        private static void UpdateBadges(string _badgeName)
+        {
+            if (!skip)
+            {
+                bool KeyEnabled = Config.GetValue(changedvar);
+                if (KeyEnabled)
+                {
+                    if (!BadgesListNames.Contains(_badgeName))
+                    {
+                        BadgesListNames.Add(_badgeName);
+                    }
+                }
+                else
+                {
+                    if (BadgesListNames.Contains(_badgeName))
+                    {
+                        BadgesListNames.Remove(_badgeName);
+                    }
+                }
+
+                if (url != null)
+                {
+                    foreach (AvatarManager av in Avatars)
+                    {
+                        av.Slot.RunSynchronously(delegate
+                        {
+                            HashSet<string> hashSet = Pool.BorrowHashSet<string>();
+                            foreach (Slot child in av.BadgeTemplates.Children)
+                            {
+                                hashSet.Add(child.Name);
+                            }
+                            String BadgeNameID = "Extra Custom Badge-" + url.ToString().Substring(url.ToString().Length - 10, 5);
+                            if (!hashSet.Contains(BadgeNameID))
+                            {
+                                if (KeyEnabled)
+                                {
+                                    BlendMode? blendMode = new BlendMode?();
+                                    colorX? tint = new colorX?();
+                                    int? maxSize = new int?(128);
+                                    av.AddIconBadge(url, BadgeNameID, blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                }
+                            }
+                            else
+                            {
+                                if (!KeyEnabled)
+                                {
+                                    av.BadgeTemplates.FindChild(BadgeNameID).Destroy();
+                                }
+                            }
+                            //Config.Set(BadgesVarInternalSlots, String.Join(",", BadgesListSlots));
+
+                            av.UpdateBadges();
+                        });
+                    }
+                }
+            }
+            else
+            {
+                foreach (AvatarManager av in Avatars)
+                {
+                    av.Slot.RunSynchronously(delegate
+                    {
+                        List<String> CustomBadgesList = Config.GetValue(CustomBadges).Split(',').ToList();
+                        foreach (String customBadge in CustomBadgesList)
+                        {
+                            av.BadgeTemplates.FindChild("Extra Badge-", true, true, 1).Destroy();
+                        }
+
+                        foreach (String customBadge in CustomBadgesList)
+                        {
+                            if (customBadge.Length > 1)
+                            {
+                                Uri burl = new Uri(customBadge);
+                                av.AddIconBadge(burl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                            }
+                        }
+                        av.UpdateBadges();
+                    });
+
+                }
+            }
+            Config.Set(BadgesVarInternalNames, String.Join(",", BadgesListNames).Trim(','));
+            
+        }
+        private static void CleanBadges()
+        {
             foreach (AvatarManager av in Avatars)
             {
                 User user = av.Slot.ActiveUser;
@@ -298,83 +431,24 @@ namespace FasterBadges
                 {
                     av.Slot.RunSynchronously(delegate
                     {
-                        if (!skip)
-                        {
-                            if (url != null)
-                            {
-                                bool KeyEnabled = Config.GetValue(changedvar); //end up with the changed ModConfigurationKey
-                                String BadgeName = configurationChangedEvent.Key.Name;
-                                HashSet<string> hashSet = Pool.BorrowHashSet<string>();
-                                foreach (Slot child in av.BadgeTemplates.Children)
-                                {
-                                    hashSet.Add(child.Name);
-                                }
 
-                                if (!hashSet.Contains("Extra Custom Badge-" + url.ToString().Substring(url.ToString().Length - 10, 5) ))
-                                {
-                                    if (KeyEnabled)
-                                    {
-                                        BlendMode? blendMode = new BlendMode?();
-                                        colorX? tint = new colorX?();
-                                        int? maxSize = new int?(128);
-                                        av.AddIconBadge(url, BadgeName, blendMode, tint, TextureFilterMode.Bilinear, maxSize);
-                                        if (!BadgesListSlots.Contains(BadgeName))
-                                        {
-                                            BadgesListSlots.Add(BadgeName);
-                                        }
-                                        if (!BadgesListUri.Contains(url))
-                                        {
-                                            BadgesListUri.Add(url);
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (!KeyEnabled)
-                                    {
-                                        av.BadgeTemplates.FindChild(BadgeName).Destroy();
-                                        if (BadgesListSlots.Contains(BadgeName))
-                                        {
-                                            BadgesListSlots.Remove(BadgeName);
-                                        }
-                                        if (BadgesListUri.Contains(url))
-                                        {
-                                            BadgesListUri.Remove(url);
-                                        }
-                                    }
-                                }
-                                Config.Set(BadgesVarInternalSlots, String.Join(",", BadgesListSlots));
-                                Config.Set(BadgesVarInternalNames, String.Join(",", BadgesListSlots));
-                            }
+                            foreach (Slot child in av.BadgeTemplates.Children)
+                            {
+                            //av.BadgeTemplates.FindChild("Extra ", true, true, 1).Destroy();
+                            if (child.Name.StartsWith("Extra "))
+                                child.Destroy();
                         }
-                        else
-                        {
-                            List<String> CustomBadgesList = Config.GetValue(CustomBadges).Split(',').ToList();
 
-                            foreach (String customBadge in CustomBadgesList)
-                            {
-                                av.BadgeTemplates.FindChild("Extra Badge-", true, true, 1).Destroy();
-                            }
-                            
-                            BlendMode? blendMode = new BlendMode?();
-                            colorX? tint = new colorX?();
-                            int? maxSize = new int?(128);
-                            foreach (String customBadge in CustomBadgesList)
-                            {
-                                Uri burl = new Uri(customBadge);
-                                av.AddIconBadge(burl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
-                            }
-
-                        }
-                        Config.Save();
+                        /* foreach (Slot child in av.BadgeTemplates.Children)
+                         {
+                            // av.BadgeTemplates.FindChild("Extra Badge-", true, true, 1).Destroy();
+                             if (child.Name.StartsWith("Extra Badge-"))
+                                 child.Destroy();
+                         }*/
                         av.UpdateBadges();
                     });
                 }
-
             }
-            
-            
-            // avatarManager.UpdateBadges();
         }
 
         [HarmonyPatch(typeof(AvatarBadgeManager))]
@@ -403,20 +477,26 @@ namespace FasterBadges
                                         avatarManager.Disposing += (field) => { Avatars.Remove(avatarManager); };
                                         Avatars.Add(avatarManager);
                                         Msg(" --- Adding Custom Badges --- ");
-                                        BlendMode? blendMode = new BlendMode?();
-                                        colorX? tint = new colorX?();
-                                        int? maxSize = new int?(128);
+
                                         foreach (String customBadge in Badges)
                                         {
-                                            Uri lurl = new Uri(customBadge);
-                                            avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                            if (customBadge.Length > 1)
+                                            {
+                                                Uri lurl = new Uri(customBadge);
+                                                avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                            }
                                         }
 
-                                        foreach (Uri BadgeName in BadgesListUri)
+                                        foreach (string badge in BadgesListNames) {
+                                            BadgesSwitch(badge); 
+                                            UpdateBadges(badge); 
+                                        }
+
+                                        /*foreach (Uri BadgeName in BadgesListUri)
                                         {
                                             BadgesSwitch(BadgeName);
                                             avatarManager.AddIconBadge(url, BadgeName, blendMode, tint, TextureFilterMode.Bilinear, maxSize);
-                                        }
+                                        }*/
                                         
                                     }
                                     else 
