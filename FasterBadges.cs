@@ -143,7 +143,7 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY4 = new ModConfigurationKey<dummy>("DUMMY_4", $"<color={HEADER_TEXT_COLOR}>[ Custom Badges ]</color>", () => new dummy());
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv)", () => "");
+        private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv of resdb urls)", () => "");
 
         private static List<String> BadgesListNames;
 
