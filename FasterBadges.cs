@@ -66,7 +66,7 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> STOPhantom = new ModConfigurationKey<bool>("STOPhantom", "STOP! Phantom Pain", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY2 = new ModConfigurationKey<dummy>("DUMMY_1", $"<color={HEADER_TEXT_COLOR}>[ Pride ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY2 = new ModConfigurationKey<dummy>("DUMMY_1", $"<color={HEADER_TEXT_COLOR}>[Heart Pride ]</color>", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Abrosexual = new ModConfigurationKey<bool>("Abrosexual", "Abrosexual", () => false);
@@ -118,7 +118,7 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Queer = new ModConfigurationKey<bool>("Queer", "Queer", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY3 = new ModConfigurationKey<dummy>("DUMMY_2", $"<color={HEADER_TEXT_COLOR}>[ Identity ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY3 = new ModConfigurationKey<dummy>("DUMMY_2", $"<color={HEADER_TEXT_COLOR}>[Diamond Identity ]</color>", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Agender = new ModConfigurationKey<bool>("Agender", "Agender", () => false);
@@ -141,15 +141,12 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Transgender = new ModConfigurationKey<bool>("Transgender", "Transgender", () => false);
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY4 = new ModConfigurationKey<dummy>("DUMMY_4", $"<color={HEADER_TEXT_COLOR}>[ Custom ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY4 = new ModConfigurationKey<dummy>("DUMMY_4", $"<color={HEADER_TEXT_COLOR}>[ Custom Badges ]</color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv)", () => "");
 
         private static List<String> BadgesListNames;
 
-        private static ModConfigurationKey<bool> changedvar = null;
-
-        private static bool skip = false;
         private static HashSet<AvatarManager> Avatars;
 
         private static BlendMode? blendMode = new BlendMode?();
@@ -181,9 +178,11 @@ namespace FasterBadges
             harmony.PatchAll();
         }
 
-        private static Uri BadgesSwitch(string Name)
+        private static (Uri, ModConfigurationKey<bool>, bool) BadgesSwitch(string Name)
         {
             Uri url = null;
+            ModConfigurationKey<bool> changedvar = null;
+            bool skip = false;
             switch (Name)
             {
                 case "Under18": 
@@ -368,7 +367,7 @@ namespace FasterBadges
                 default:
                     break;
             }
-            return url;
+            return (url,changedvar, skip);
         }
         private void OnThisConfigurationChanged(ConfigurationChangedEvent configurationChangedEvent)
         {
@@ -380,7 +379,8 @@ namespace FasterBadges
                     CleanBadges();
                     foreach (string badge in BadgesListNames) 
                     {
-                        UpdateBadges(badge, BadgesSwitch(badge));
+                        var BadgeData = BadgesSwitch(badge);
+                        UpdateBadges(badge, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
                     }
                     List<String> CustomBadgesList = Config.GetValue(CustomBadges).Split(',').ToList();
                     if (CustomBadgesList.Count > 0)
@@ -407,14 +407,21 @@ namespace FasterBadges
                     CleanBadges();
                 }               
             }
+            else if(configurationChangedEvent.Key == CustomBadges)
+            {
+                //clean
+                //check string valid Config.GetValue(CustomBadges)
+                //regen
+            }
             else
             {
                 String badgeName = configurationChangedEvent.Key.Name;
-                UpdateBadges(badgeName, BadgesSwitch(badgeName));
+                var BadgeData = BadgesSwitch(badgeName);
+                UpdateBadges(badgeName, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
             }
         }
 
-        private static void UpdateBadges(string _badgeName,Uri url)
+        private static void UpdateBadges(string _badgeName,Uri url, ModConfigurationKey<bool> changedvar, bool skip)
         {
             if (!skip)
             {
@@ -551,7 +558,8 @@ namespace FasterBadges
                                             }
                                             foreach (string badge in BadgesListNames) 
                                             {
-                                                UpdateBadges(badge, BadgesSwitch(badge));
+                                                var BadgeData = BadgesSwitch(badge);
+                                                UpdateBadges(badge, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
                                             }
                                         });
                                     }
