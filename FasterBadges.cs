@@ -12,6 +12,7 @@ using FrooxEngine.CommonAvatar;
 using System.Runtime.CompilerServices;
 using static FrooxEngine.AppEnder;
 using static OfficialAssets.Graphics;
+using static FrooxEngine.FullBodyCalibratorDialog;
 
 namespace FasterBadges
 {
@@ -20,22 +21,52 @@ namespace FasterBadges
         public override String Name => "FasterBadges";
         public override String Author => "zahndy";
         public override String Link => "https://github.com/zahndy/FasterBadges";
-        public override String Version => "1.1.0";
+        public override String Version => "1.2.0";
 
         public static ModConfiguration Config;
 
-        const string HEADER_TEXT_COLOR = "green";
-        //https://wiki.resonite.com/Resonite_Bot#Assignable_Badges
+        const string HEADER_TEXT_COLOR = "#BA64F2";
+
         public delegate void ConfigurationChangedHandler(ConfigurationChangedEvent configurationChangedEvent);
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> ENABLED = new ModConfigurationKey<bool>("enabled", "Enabled", () => true);
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> TEST_DUMMY = new ModConfigurationKey<dummy>("dummy", "For Accessibility badges please see https://wiki.resonite.com/Resonite_Bot#Assignable_Badges");
-        [AutoRegisterConfigKey] 
-        private static readonly ModConfigurationKey<dummy> TEST_DUMMY1 = new ModConfigurationKey<dummy>("dummyLine", "---------------------------------------------------------------------------------------------------------------------------------");
+        private static readonly ModConfigurationKey<dummy> DUMMY = new ModConfigurationKey<dummy>("dummy", "For Accessibility badges please see https://wiki.resonite.com/Resonite_Bot#Assignable_Badges");
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> TEST_DUMMY2 = new ModConfigurationKey<dummy>("DUMMY_1", $"<color={HEADER_TEXT_COLOR}>[Pride]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY1 = new ModConfigurationKey<dummy>("dummyLine", $"<color={HEADER_TEXT_COLOR}>---------------------------------------------------------------------------------------------------------------------------------</color>");
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY5 = new ModConfigurationKey<dummy>("DUMMY_5", $"<color={HEADER_TEXT_COLOR}>[ Age ]</color>", () => new dummy());
+
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> Under18 = new ModConfigurationKey<bool>("Under18", "Under 18", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> Over18 = new ModConfigurationKey<bool>("Over18", "Over 18", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> Minor = new ModConfigurationKey<bool>("Minor", "Minor", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> Adult = new ModConfigurationKey<bool>("Adult", "Adult", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> VeryOld = new ModConfigurationKey<bool>("VeryOld", "Very old", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> Fossil = new ModConfigurationKey<bool>("Fossil", "Fossil", () => false);
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY6 = new ModConfigurationKey<dummy>("DUMMY_6", $"<color={HEADER_TEXT_COLOR}>[ Various ]</color>", () => new dummy());
+
+
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> ADHD = new ModConfigurationKey<bool>("ADHD", "ADHD", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> ADHDFlag = new ModConfigurationKey<bool>("ADHDFlag", "ADHD Flag", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> NOLewd = new ModConfigurationKey<bool>("NOLewd", "NO Lewd", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> STOPhantom = new ModConfigurationKey<bool>("STOPhantom", "STOP! Phantom Pain", () => false);
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY2 = new ModConfigurationKey<dummy>("DUMMY_1", $"<color={HEADER_TEXT_COLOR}>[ Pride ]</color>", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Abrosexual = new ModConfigurationKey<bool>("Abrosexual", "Abrosexual", () => false);
@@ -87,7 +118,7 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Queer = new ModConfigurationKey<bool>("Queer", "Queer", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> TEST_DUMMY3 = new ModConfigurationKey<dummy>("DUMMY_2", $"<color={HEADER_TEXT_COLOR}>[Identity]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY3 = new ModConfigurationKey<dummy>("DUMMY_2", $"<color={HEADER_TEXT_COLOR}>[ Identity ]</color>", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Agender = new ModConfigurationKey<bool>("Agender", "Agender", () => false);
@@ -109,17 +140,15 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Polyamorous = new ModConfigurationKey<bool>("Polyamorous", "Polyamorous", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Transgender = new ModConfigurationKey<bool>("Transgender", "Transgender", () => false);
-
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY4 = new ModConfigurationKey<dummy>("DUMMY_4", $"<color={HEADER_TEXT_COLOR}>[ Custom ]</color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv)", () => "");
-
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<string> BadgesVarInternalNames = new ModConfigurationKey<string>("BadgesVarInternalNames", "(csv)", () => "", internalAccessOnly: true);
 
         private static List<String> BadgesListNames;
 
         private static ModConfigurationKey<bool> changedvar = null;
-        private static Uri url = null;
+
         private static bool skip = false;
         private static HashSet<AvatarManager> Avatars;
 
@@ -131,16 +160,72 @@ namespace FasterBadges
             Config = GetConfiguration();
             Config.OnThisConfigurationChanged += OnThisConfigurationChanged;
             Config.Save(true);
-            BadgesListNames = Config.GetValue(BadgesVarInternalNames).Split(',').ToList();
+            BadgesListNames = new List<string>();
+            foreach (ModConfigurationKey configurationItemDefinition in Config.ConfigurationItemDefinitions)
+            {
+                if (configurationItemDefinition.ValueType() != typeof(dummy) && configurationItemDefinition != ENABLED)
+                {
+                    if (Config.GetValue(configurationItemDefinition).GetType() == typeof(bool))
+                    {
+                        bool value = (bool)Config.GetValue(configurationItemDefinition);
+                        if (value == true)
+                        {
+                            BadgesListNames.Add(configurationItemDefinition.Name);
+                        }
+
+                    }
+                }
+            }
             Harmony harmony = new Harmony("com.zahndy.FasterBadges");
             Avatars = new HashSet<AvatarManager>();
             harmony.PatchAll();
         }
 
-        private static void BadgesSwitch(string Name)
+        private static Uri BadgesSwitch(string Name)
         {
+            Uri url = null;
             switch (Name)
             {
+                case "Under18": 
+                    changedvar = Under18;
+                    url = new Uri("resdb:///030a337b2f1038c4e833dbef2c53bea30e47117c22ec5b01e65cb59c7e76380b.png");
+                    break;
+                case "Over18":
+                    changedvar = Over18;
+                    url = new Uri("resdb:///874e0c62cf6a8bda5a65ffe7518617e5742339d0c362d5717e8dc6d7e05c5eac.png");
+                    break;
+                case "Minor":
+                    changedvar = Minor;
+                    url = new Uri("resdb:///9dff86e3142f439ee273c57a67e5706ec20d60c5e5179dd59f238c8a24e6c923.png");
+                    break;
+                case "Adult":
+                    changedvar = Adult;
+                    url = new Uri("resdb:///bf80832420136d2d1029011dd2295a3871c97e4624b90e3d628a935f0301f087.png");
+                    break;
+                case "VeryOld":
+                    changedvar = VeryOld;
+                    url = new Uri("resdb:///830b795065d5ea8f0458f7390c8b0bac4b0df6f453bcec539fd08f46ab99e88b.png");
+                    break;
+                case "Fossil":
+                    changedvar = Fossil;
+                    url = new Uri("resdb:///6815fa0f9656d94cf108054331c4fff47904426eac29044dc71406dba1085c37.png");
+                    break;
+                case "ADHD":
+                    changedvar = ADHD;
+                    url = new Uri("resdb:///3b57b6ce48b8d1fbe295942ab4883d830d039faaba6be2251d32baebbbbfc71c.png");
+                    break;
+                case "ADHDFlag":
+                    changedvar = ADHDFlag;
+                    url = new Uri("resdb:///5c24a24f980300d9066c2eafdf2d57d328404f7bebe37472365a19ec6d2a77f6.png");
+                    break;
+                case "NOLewd":
+                    changedvar = NOLewd;
+                    url = new Uri("resdb:///c6f7561c0f5b0ca7d986c23a36d0af1681e2779ae1c1e1db9e98b10866345fbf.png");
+                    break;
+                case "STOPhantom":
+                    changedvar = STOPhantom;
+                    url = new Uri("resdb:///d84873aa4025c12a26b10d51d86bde48caa4a2b8f7c4eba96fff6c324c8ba5cd.png");
+                    break;
                 case "CustomBadges":
                     skip = true;
                     break;
@@ -282,33 +367,26 @@ namespace FasterBadges
                     break;
                 default:
                     break;
-
             }
+            return url;
         }
         private void OnThisConfigurationChanged(ConfigurationChangedEvent configurationChangedEvent)
         {
-
-            Msg(" --- configurationChangedEvent.Key.Name: " + configurationChangedEvent.Key.Name + " --- ");
             if (configurationChangedEvent.Key == ENABLED) 
             {
                 if (Config.GetValue(ENABLED))
                 {
-                    Msg(" --- ENABLED: {0} --- ", Config.GetValue(ENABLED));
-
+                    Msg(" --- ENABLED --- ");
+                    CleanBadges();
                     foreach (string badge in BadgesListNames) 
                     {
-                        BadgesSwitch(badge);
-                        UpdateBadges(badge); 
+                        UpdateBadges(badge, BadgesSwitch(badge));
                     }
-
                     List<String> CustomBadgesList = Config.GetValue(CustomBadges).Split(',').ToList();
-                    Msg(" --- Adding  CustomBadges --- ");
-                    Msg(" --- CustomBadgesList.Count: {0} --- ", CustomBadgesList.Count);
                     if (CustomBadgesList.Count > 0)
                     {
                         foreach (String customBadge in CustomBadgesList)
                         {
-                            Msg(" --- customBadge.Length:{0} --- ", customBadge.Length);
                             if (customBadge.Length > 1)
                             {
                                 Uri burl = new Uri(customBadge);
@@ -325,20 +403,18 @@ namespace FasterBadges
                 }
                 else 
                 {
+                    Msg(" --- DISABLED --- ");
                     CleanBadges();
-                }
-                
+                }               
             }
-            else if (configurationChangedEvent.Key != BadgesVarInternalNames)
-            { 
+            else
+            {
                 String badgeName = configurationChangedEvent.Key.Name;
-                BadgesSwitch(badgeName);
-                UpdateBadges(badgeName);
-                //Config.Save();
+                UpdateBadges(badgeName, BadgesSwitch(badgeName));
             }
         }
 
-        private static void UpdateBadges(string _badgeName)
+        private static void UpdateBadges(string _badgeName,Uri url)
         {
             if (!skip)
             {
@@ -357,7 +433,6 @@ namespace FasterBadges
                         BadgesListNames.Remove(_badgeName);
                     }
                 }
-
                 if (url != null)
                 {
                     foreach (AvatarManager av in Avatars)
@@ -374,9 +449,6 @@ namespace FasterBadges
                             {
                                 if (KeyEnabled)
                                 {
-                                    BlendMode? blendMode = new BlendMode?();
-                                    colorX? tint = new colorX?();
-                                    int? maxSize = new int?(128);
                                     av.AddIconBadge(url, BadgeNameID, blendMode, tint, TextureFilterMode.Bilinear, maxSize);
                                 }
                             }
@@ -387,8 +459,6 @@ namespace FasterBadges
                                     av.BadgeTemplates.FindChild(BadgeNameID).Destroy();
                                 }
                             }
-                            //Config.Set(BadgesVarInternalSlots, String.Join(",", BadgesListSlots));
-
                             av.UpdateBadges();
                         });
                     }
@@ -405,7 +475,6 @@ namespace FasterBadges
                         {
                             av.BadgeTemplates.FindChild("Extra Badge-", true, true, 1).Destroy();
                         }
-
                         foreach (String customBadge in CustomBadgesList)
                         {
                             if (customBadge.Length > 1)
@@ -418,9 +487,7 @@ namespace FasterBadges
                     });
 
                 }
-            }
-            Config.Set(BadgesVarInternalNames, String.Join(",", BadgesListNames).Trim(','));
-            
+            }           
         }
         private static void CleanBadges()
         {
@@ -431,20 +498,15 @@ namespace FasterBadges
                 {
                     av.Slot.RunSynchronously(delegate
                     {
-
-                            foreach (Slot child in av.BadgeTemplates.Children)
-                            {
-                            //av.BadgeTemplates.FindChild("Extra ", true, true, 1).Destroy();
-                            if (child.Name.StartsWith("Extra "))
-                                child.Destroy();
+                        foreach (string child in BadgesListNames)
+                        {
+                            av.BadgeTemplates.FindChild("Extra ", true, true, 1).Destroy(); 
                         }
-
-                        /* foreach (Slot child in av.BadgeTemplates.Children)
-                         {
-                            // av.BadgeTemplates.FindChild("Extra Badge-", true, true, 1).Destroy();
-                             if (child.Name.StartsWith("Extra Badge-"))
-                                 child.Destroy();
-                         }*/
+                        String[] Badges = Config.GetValue(CustomBadges).Split(',');
+                        foreach (String customBadge in Badges)
+                        {
+                            av.BadgeTemplates.FindChild("Extra ", true, true, 1).Destroy();
+                        }
                         av.UpdateBadges();
                     });
                 }
@@ -474,30 +536,24 @@ namespace FasterBadges
                                 {
                                     if (!Avatars.Contains(avatarManager))
                                     {
-                                        avatarManager.Disposing += (field) => { Avatars.Remove(avatarManager); };
-                                        Avatars.Add(avatarManager);
-                                        Msg(" --- Adding Custom Badges --- ");
+                                        avatarManager.RunSynchronously(delegate { 
+                                            avatarManager.Disposing += (field) => { Avatars.Remove(avatarManager); };
+                                            Avatars.Add(avatarManager);
+                                            Msg(" --- Adding Custom Badges --- ");
 
-                                        foreach (String customBadge in Badges)
-                                        {
-                                            if (customBadge.Length > 1)
+                                            foreach (String customBadge in Badges)
                                             {
-                                                Uri lurl = new Uri(customBadge);
-                                                avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                                if (customBadge.Length > 1)
+                                                {
+                                                    Uri lurl = new Uri(customBadge);
+                                                    avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                                }
                                             }
-                                        }
-
-                                        foreach (string badge in BadgesListNames) {
-                                            BadgesSwitch(badge); 
-                                            UpdateBadges(badge); 
-                                        }
-
-                                        /*foreach (Uri BadgeName in BadgesListUri)
-                                        {
-                                            BadgesSwitch(BadgeName);
-                                            avatarManager.AddIconBadge(url, BadgeName, blendMode, tint, TextureFilterMode.Bilinear, maxSize);
-                                        }*/
-                                        
+                                            foreach (string badge in BadgesListNames) 
+                                            {
+                                                UpdateBadges(badge, BadgesSwitch(badge));
+                                            }
+                                        });
                                     }
                                     else 
                                     { 
