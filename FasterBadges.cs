@@ -382,12 +382,12 @@ namespace FasterBadges
                         var BadgeData = BadgesSwitch(badge);
                         UpdateBadges(badge, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
                     }
-                    List<String> CustomBadgesList = Config.GetValue(CustomBadges).Split(',').ToList();
+                    List<String> CustomBadgesList = Config.GetValue(CustomBadges).Trim(',').Split(',').ToList();
                     if (CustomBadgesList.Count > 0)
                     {
                         foreach (String customBadge in CustomBadgesList)
                         {
-                            if (customBadge.Length > 1)
+                            if (customBadge.Length > 70)
                             {
                                 Uri burl = new Uri(customBadge);
                                 foreach (AvatarManager av in Avatars)
@@ -407,11 +407,38 @@ namespace FasterBadges
                     CleanBadges();
                 }               
             }
-            else if(configurationChangedEvent.Key == CustomBadges)
+            else if(configurationChangedEvent.Key == CustomBadges) //custom string has updated
             {
-                //clean
-                //check string valid Config.GetValue(CustomBadges)
-                //regen
+                string newstr =Config.GetValue(CustomBadges).Trim(',');
+                List<String> newList = newstr.Split(',').ToList();
+                
+                Avatars.ElementAt(0).Slot.RunSynchronously(delegate 
+                { 
+                    CleanBadges();
+                    foreach (AvatarManager avatarManager in Avatars)
+                    {
+                        avatarManager.RunSynchronously(delegate
+                        {
+                            Msg(" --- Re-Adding Custom Badges --- ");
+                            if (newList.Count > 0)
+                            {
+                                foreach (String customBadge in newList)
+                                {
+                                    if (customBadge.Length > 70)
+                                    {
+                                        Uri lurl = new Uri(customBadge);
+                                        avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                    }
+                                }
+                            }
+                            foreach (string badge in BadgesListNames)
+                            {
+                                var BadgeData = BadgesSwitch(badge);
+                                UpdateBadges(badge, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
+                            }
+                        });
+                    }
+                });            
             }
             else
             {
@@ -423,7 +450,7 @@ namespace FasterBadges
 
         private static void UpdateBadges(string _badgeName,Uri url, ModConfigurationKey<bool> changedvar, bool skip)
         {
-            if (!skip)
+            if (!skip) 
             {
                 bool KeyEnabled = Config.GetValue(changedvar);
                 if (KeyEnabled)
@@ -471,20 +498,20 @@ namespace FasterBadges
                     }
                 }
             }
-            else
+            else //CustomBadges csv
             {
                 foreach (AvatarManager av in Avatars)
                 {
                     av.Slot.RunSynchronously(delegate
                     {
-                        List<String> CustomBadgesList = Config.GetValue(CustomBadges).Split(',').ToList();
+                        List<String> CustomBadgesList = Config.GetValue(CustomBadges).Trim(',').Split(',').ToList();
                         foreach (String customBadge in CustomBadgesList)
                         {
                             av.BadgeTemplates.FindChild("Extra Badge-", true, true, 1).Destroy();
                         }
                         foreach (String customBadge in CustomBadgesList)
                         {
-                            if (customBadge.Length > 1)
+                            if (customBadge.Length > 70)
                             {
                                 Uri burl = new Uri(customBadge);
                                 av.AddIconBadge(burl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
@@ -509,8 +536,8 @@ namespace FasterBadges
                         {
                             av.BadgeTemplates.FindChild("Extra ", true, true, 1).Destroy(); 
                         }
-                        String[] Badges = Config.GetValue(CustomBadges).Split(',');
-                        foreach (String customBadge in Badges)
+                        String[] badges = Config.GetValue(CustomBadges).Trim(',').Split(',');
+                        foreach (String customBadge in badges)
                         {
                             av.BadgeTemplates.FindChild("Extra ", true, true, 1).Destroy();
                         }
@@ -534,8 +561,8 @@ namespace FasterBadges
                     {
                         if (user.IsLocalUser)
                         {
-                            String[] Badges = Config.GetValue(CustomBadges).Split(',');
-                            if (Badges.Count() > 0 && Badges[0].Length > 1)
+                            String[] badges = Config.GetValue(CustomBadges).Trim(',').Split(',');
+                            if (badges.Count() > 0 && badges[0].Length > 70)
                             {
                                 UserRoot userRoot = user.Root;
                                 AvatarManager avatarManager = userRoot.Slot.GetComponent<AvatarManager>();
@@ -548,7 +575,7 @@ namespace FasterBadges
                                             Avatars.Add(avatarManager);
                                             Msg(" --- Adding Custom Badges --- ");
 
-                                            foreach (String customBadge in Badges)
+                                            foreach (String customBadge in badges)
                                             {
                                                 if (customBadge.Length > 1)
                                                 {
@@ -558,8 +585,8 @@ namespace FasterBadges
                                             }
                                             foreach (string badge in BadgesListNames) 
                                             {
-                                                var BadgeData = BadgesSwitch(badge);
-                                                UpdateBadges(badge, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
+                                                var badgeData = BadgesSwitch(badge);
+                                                UpdateBadges(badge, badgeData.Item1, badgeData.Item2, badgeData.Item3);
                                             }
                                         });
                                     }
