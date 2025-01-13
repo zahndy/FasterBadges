@@ -26,6 +26,7 @@ namespace FasterBadges
         public static ModConfiguration Config;
 
         const string HEADER_TEXT_COLOR = "#BA64F2";
+        private static Predicate<string> checkNull = delegate (string str) { return (str != null); };
 
         public delegate void ConfigurationChangedHandler(ConfigurationChangedEvent configurationChangedEvent);
 
@@ -37,7 +38,7 @@ namespace FasterBadges
         private static readonly ModConfigurationKey<dummy> DUMMY1 = new ModConfigurationKey<dummy>("dummyLine", $"<color={HEADER_TEXT_COLOR}>---------------------------------------------------------------------------------------------------------------------------------</color>");
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY5 = new ModConfigurationKey<dummy>("DUMMY_5", $"<color={HEADER_TEXT_COLOR}>[ Age ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY5 = new ModConfigurationKey<dummy>("DUMMY_5", $"<color={HEADER_TEXT_COLOR}>[ Age Related ]</color>", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Under18 = new ModConfigurationKey<bool>("Under18", "Under 18", () => false);
@@ -55,7 +56,8 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY6 = new ModConfigurationKey<dummy>("DUMMY_6", $"<color={HEADER_TEXT_COLOR}>[ Various ]</color>", () => new dummy());
 
-
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> Avali = new ModConfigurationKey<bool>("Avali", "Avali", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> ADHD = new ModConfigurationKey<bool>("ADHD", "ADHD", () => false);
         [AutoRegisterConfigKey]
@@ -64,9 +66,13 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> NOLewd = new ModConfigurationKey<bool>("NOLewd", "NO Lewd", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> STOPhantom = new ModConfigurationKey<bool>("STOPhantom", "STOP! Phantom Pain", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> PhantomCircle = new ModConfigurationKey<bool>("PhantomCircle", "! Phantom Sense", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> USFN = new ModConfigurationKey<bool>("USFN", "USFN", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY2 = new ModConfigurationKey<dummy>("DUMMY_1", $"<color={HEADER_TEXT_COLOR}>[Heart Pride ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY2 = new ModConfigurationKey<dummy>("DUMMY_1", $"<color={HEADER_TEXT_COLOR}>[ Heart Pride ]</color>", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Abrosexual = new ModConfigurationKey<bool>("Abrosexual", "Abrosexual", () => false);
@@ -118,8 +124,7 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Queer = new ModConfigurationKey<bool>("Queer", "Queer", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY3 = new ModConfigurationKey<dummy>("DUMMY_2", $"<color={HEADER_TEXT_COLOR}>[Diamond Identity ]</color>", () => new dummy());
-
+        private static readonly ModConfigurationKey<dummy> DUMMY3 = new ModConfigurationKey<dummy>("DUMMY_2", $"<color={HEADER_TEXT_COLOR}>[ Diamond Identity ]</color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Agender = new ModConfigurationKey<bool>("Agender", "Agender", () => false);
         [AutoRegisterConfigKey]
@@ -143,7 +148,7 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY4 = new ModConfigurationKey<dummy>("DUMMY_4", $"<color={HEADER_TEXT_COLOR}>[ Custom Badges ]</color>", () => new dummy());
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv of resdb urls)", () => "");
+        private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv of urls: \"url1,url2,url3\" resdb or http)", () => "",false ,checkNull);
 
         private static List<String> BadgesListNames;
 
@@ -177,7 +182,6 @@ namespace FasterBadges
             Avatars = new HashSet<AvatarManager>();
             harmony.PatchAll();
         }
-
         private static (Uri, ModConfigurationKey<bool>, bool) BadgesSwitch(string Name)
         {
             Uri url = null;
@@ -207,7 +211,11 @@ namespace FasterBadges
                     break;
                 case "Fossil":
                     changedvar = Fossil;
-                    url = new Uri("resdb:///6815fa0f9656d94cf108054331c4fff47904426eac29044dc71406dba1085c37.png");
+                    url = new Uri("resdb:///6815fa0f9656d94cf108054331c4fff47904426eac29044dc71406dba1085c37.png"); 
+                    break;
+                case "Avali":
+                    changedvar = Avali;
+                    url = new Uri("resdb:///6548f96f2b16bbeb8538dddb7c5c94ff2645823de54cf85b37da97e6b9a8f5c8.png");
                     break;
                 case "ADHD":
                     changedvar = ADHD;
@@ -219,11 +227,19 @@ namespace FasterBadges
                     break;
                 case "NOLewd":
                     changedvar = NOLewd;
-                    url = new Uri("resdb:///c6f7561c0f5b0ca7d986c23a36d0af1681e2779ae1c1e1db9e98b10866345fbf.png");
+                    url = new Uri("resdb:///c6f7561c0f5b0ca7d986c23a36d0af1681e2779ae1c1e1db9e98b10866345fbf.png"); 
                     break;
                 case "STOPhantom":
                     changedvar = STOPhantom;
                     url = new Uri("resdb:///d84873aa4025c12a26b10d51d86bde48caa4a2b8f7c4eba96fff6c324c8ba5cd.png");
+                    break;
+                case "PhantomCircle":
+                    changedvar = PhantomCircle;
+                    url = new Uri("resdb:///8c8066dc639d9235f0de37a66e90f647534dd670e2166eaf6db2e8753a049266");
+                    break;
+                case "USFN":
+                    changedvar = USFN;
+                    url = new Uri("resdb:///7886e38f5d36f41d7ee3fdcbd520867bbe737a2bfb6cbdde2d0af9c0d20d1d3d.png");
                     break;
                 case "CustomBadges":
                     skip = true;
@@ -387,7 +403,7 @@ namespace FasterBadges
                     {
                         foreach (String customBadge in CustomBadgesList)
                         {
-                            if (customBadge.Length > 70)
+                            if (customBadge.Length > 10)
                             {
                                 Uri burl = new Uri(customBadge);
                                 foreach (AvatarManager av in Avatars)
@@ -409,34 +425,38 @@ namespace FasterBadges
             }
             else if(configurationChangedEvent.Key == CustomBadges) //custom string has updated
             {
-                string newstr =Config.GetValue(CustomBadges).Trim(',');
-                List<String> newList = newstr.Split(',').ToList();
                 
                 Avatars.ElementAt(0).Slot.RunSynchronously(delegate 
                 { 
                     CleanBadges();
-                    foreach (AvatarManager avatarManager in Avatars)
-                    {
-                        avatarManager.RunSynchronously(delegate
+                    if(CustomBadges != null) 
+                    { 
+                        string newstr = Config.GetValue(CustomBadges).Trim(',', ' ');
+                        List<String> newList = newstr.Split(',').ToList();
+                        foreach (AvatarManager avatarManager in Avatars)
                         {
-                            Msg(" --- Re-Adding Custom Badges --- ");
-                            if (newList.Count > 0)
+                            avatarManager.RunSynchronously(delegate
                             {
-                                foreach (String customBadge in newList)
+                                Msg(" --- Re-Adding Custom Badges --- ");
+                                if (newList.Count > 0)
                                 {
-                                    if (customBadge.Length > 70)
+                                    foreach (String customBadge in newList)
                                     {
-                                        Uri lurl = new Uri(customBadge);
-                                        avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                        if (customBadge.Length > 10)
+                                        {
+                                            Uri lurl = new Uri(customBadge);
+                                            avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                        }
                                     }
-                                }
-                            }
-                            foreach (string badge in BadgesListNames)
-                            {
-                                var BadgeData = BadgesSwitch(badge);
-                                UpdateBadges(badge, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
-                            }
-                        });
+                                }                            
+                            });
+                        }
+                    }
+                    Msg(" --- Re-Adding Badges --- ");
+                    foreach (string badge in BadgesListNames)
+                    {
+                        var BadgeData = BadgesSwitch(badge);
+                        UpdateBadges(badge, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
                     }
                 });            
             }
@@ -447,7 +467,6 @@ namespace FasterBadges
                 UpdateBadges(badgeName, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
             }
         }
-
         private static void UpdateBadges(string _badgeName,Uri url, ModConfigurationKey<bool> changedvar, bool skip)
         {
             if (!skip) 
@@ -504,20 +523,23 @@ namespace FasterBadges
                 {
                     av.Slot.RunSynchronously(delegate
                     {
-                        List<String> CustomBadgesList = Config.GetValue(CustomBadges).Trim(',').Split(',').ToList();
-                        foreach (String customBadge in CustomBadgesList)
+                        if (CustomBadges != null)
                         {
-                            av.BadgeTemplates.FindChild("Extra Badge-", true, true, 1).Destroy();
-                        }
-                        foreach (String customBadge in CustomBadgesList)
-                        {
-                            if (customBadge.Length > 70)
+                            List<String> CustomBadgesList = Config.GetValue(CustomBadges).Trim(',').Split(',').ToList();
+                            foreach (String customBadge in CustomBadgesList)
                             {
-                                Uri burl = new Uri(customBadge);
-                                av.AddIconBadge(burl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                av.BadgeTemplates.FindChild("Extra Badge-", true, true, 1).Destroy();
                             }
+                            foreach (String customBadge in CustomBadgesList)
+                            {
+                                if (customBadge.Length > 10)
+                                {
+                                    Uri burl = new Uri(customBadge);
+                                    av.AddIconBadge(burl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                }
+                            }
+                            av.UpdateBadges();
                         }
-                        av.UpdateBadges();
                     });
 
                 }
@@ -536,10 +558,13 @@ namespace FasterBadges
                         {
                             av.BadgeTemplates.FindChild("Extra ", true, true, 1).Destroy(); 
                         }
-                        String[] badges = Config.GetValue(CustomBadges).Trim(',').Split(',');
-                        foreach (String customBadge in badges)
+                        if (CustomBadges != null)
                         {
-                            av.BadgeTemplates.FindChild("Extra ", true, true, 1).Destroy();
+                            String[] badges = Config.GetValue(CustomBadges).Trim(',').Split(',');
+                            foreach (String customBadge in badges)
+                            {
+                                av.BadgeTemplates.FindChild("Extra ", true, true, 1).Destroy();
+                            }
                         }
                         av.UpdateBadges();
                     });
@@ -561,41 +586,40 @@ namespace FasterBadges
                     {
                         if (user.IsLocalUser)
                         {
-                            String[] badges = Config.GetValue(CustomBadges).Trim(',').Split(',');
-                            if (badges.Count() > 0 && badges[0].Length > 70)
-                            {
+                            if ((!String.IsNullOrEmpty(CustomBadges.ToString()) && CustomBadges != null) || BadgesListNames.Count > 0)
+                            {                               
                                 UserRoot userRoot = user.Root;
                                 AvatarManager avatarManager = userRoot.Slot.GetComponent<AvatarManager>();
                                 if (avatarManager != null)
                                 {
                                     if (!Avatars.Contains(avatarManager))
                                     {
-                                        avatarManager.RunSynchronously(delegate { 
+                                        avatarManager.RunSynchronously(delegate
+                                        {
                                             avatarManager.Disposing += (field) => { Avatars.Remove(avatarManager); };
                                             Avatars.Add(avatarManager);
                                             Msg(" --- Adding Custom Badges --- ");
-
-                                            foreach (String customBadge in badges)
+                                            String[] badges = Config.GetValue(CustomBadges).Trim(',').Split(',');
+                                            if (badges.Count() > 0 && badges[0].Length > 10)
                                             {
-                                                if (customBadge.Length > 1)
+                                                foreach (String customBadge in badges)
                                                 {
-                                                    Uri lurl = new Uri(customBadge);
-                                                    avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                                    if (customBadge.Length > 10)
+                                                    {
+                                                        Uri lurl = new Uri(customBadge);
+                                                        avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                                    }
                                                 }
                                             }
-                                            foreach (string badge in BadgesListNames) 
+                                            foreach (string badge in BadgesListNames)
                                             {
                                                 var badgeData = BadgesSwitch(badge);
                                                 UpdateBadges(badge, badgeData.Item1, badgeData.Item2, badgeData.Item3);
                                             }
                                         });
                                     }
-                                    else 
-                                    { 
-                                        Msg(" --- Badges already added to this avatarManager --- "); 
-                                    }
-                                    // avatarManager.UpdateBadges();
                                 }
+                                
                             }
                         }
                     }
