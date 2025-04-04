@@ -16,6 +16,129 @@ using static FrooxEngine.FullBodyCalibratorDialog;
 
 namespace FasterBadges
 {
+    public class BadgeConfiguration
+    {
+        public string Name { get; set; }
+        public string DisplayName { get; set; }
+        public Uri ResourceUrl { get; set; }
+        public BadgeCategory Category { get; set; }
+        public ModConfigurationKey<bool> ConfigKey { get; set; }
+    }
+
+    public enum BadgeCategory
+    {
+        Age,
+        Various,
+        HeartPride,
+        DiamondIdentity,
+        Language,
+        Custom
+    }
+
+    public class BadgeResourceManager
+    {
+        private readonly Dictionary<string, (Uri url, ModConfigurationKey<bool> config)> _resourceMap;
+
+        public BadgeResourceManager()
+        {
+            _resourceMap = new Dictionary<string, (Uri, ModConfigurationKey<bool>)>();
+        }
+
+        public void RegisterBadge(string name, Uri url, ModConfigurationKey<bool> config)
+        {
+            _resourceMap[name] = (url, config);
+        }
+
+        public (Uri url, ModConfigurationKey<bool> config, bool skip) GetBadgeData(string name)
+        {
+            if (_resourceMap.TryGetValue(name, out var data))
+            {
+                return (data.url, data.config, false);
+            }
+            return (null, null, name == "CustomBadges");
+        }
+    }
+
+    public class AvatarBadgeHandler
+    {
+        private readonly HashSet<AvatarManager> _avatars;
+        private readonly BlendMode? _blendMode;
+        private readonly colorX? _tint;
+        private readonly int? _maxSize;
+
+        public AvatarBadgeHandler(BlendMode? blendMode, colorX? tint, int? maxSize)
+        {
+            _avatars = new HashSet<AvatarManager>();
+            _blendMode = blendMode;
+            _tint = tint;
+            _maxSize = maxSize;
+        }
+
+        public void AddAvatar(AvatarManager avatar)
+        {
+            if (!_avatars.Contains(avatar))
+            {
+                avatar.Disposing += (field) => { _avatars.Remove(avatar); };
+                _avatars.Add(avatar);
+            }
+        }
+        public IEnumerable<AvatarManager> GetAvatars()
+        {
+            return _avatars;
+        }
+
+        public void UpdateBadges(string badgeName, Uri url, ModConfigurationKey<bool> config)
+        {
+            bool keyEnabled = Patch.Config.GetValue(config);
+            foreach (AvatarManager av in _avatars)
+            {
+                av.Slot.RunSynchronously(delegate
+                {
+                    HashSet<string> hashSet = Pool.BorrowHashSet<string>();
+                    foreach (Slot child in av.BadgeTemplates.Children)
+                    {
+                        hashSet.Add(child.Name);
+                    }
+                    String badgeNameId = "Extra Custom Badge-" + url.ToString().Substring(url.ToString().Length - 10, 5);
+                    if (!hashSet.Contains(badgeNameId))
+                    {
+                        if (keyEnabled)
+                        {
+                            av.AddIconBadge(url, badgeNameId, _blendMode, _tint, TextureFilterMode.Bilinear, _maxSize);
+                        }
+                    }
+                    else
+                    {
+                        if (!keyEnabled)
+                        {
+                            av.BadgeTemplates.FindChild(badgeNameId).Destroy();
+                        }
+                    }
+                    av.UpdateBadges();
+                });
+            }
+        }
+
+        public void CleanBadges()
+        {
+            foreach (AvatarManager av in _avatars)
+            {
+                User user = av.Slot.ActiveUser;
+                if (user.IsLocalUser)
+                {
+                    av.Slot.RunSynchronously(delegate
+                    {
+                        var badgeTemplates = av.BadgeTemplates.Children.Where(child => child.Name.StartsWith("Extra ")).ToList();
+                        foreach (var badge in badgeTemplates)
+                        {
+                            badge.Destroy();
+                        }
+                        av.UpdateBadges();
+                    });
+                }
+            }
+        }
+    }
     public class Patch : ResoniteMod
     {
         public override String Name => "FasterBadges";
@@ -23,13 +146,15 @@ namespace FasterBadges
         public override String Link => "https://github.com/zahndy/FasterBadges";
         public override String Version => "1.2.0";
 
+        private static readonly BadgeResourceManager _resourceManager = new BadgeResourceManager();
+        private static readonly AvatarBadgeHandler _avatarHandler = new AvatarBadgeHandler(blendMode, tint, maxSize);
+        private static List<String> BadgesListNames = new List<string>();
         public static ModConfiguration Config;
 
-        const string HEADER_TEXT_COLOR = "#BA64F2";
+        private const string HEADER_TEXT_COLOR = "#BA64F2";
         private static Predicate<string> checkNull = delegate (string str) { return (str != null); };
 
-        public delegate void ConfigurationChangedHandler(ConfigurationChangedEvent configurationChangedEvent);
-
+        // Keep all existing ModConfigurationKey definitions as they are...
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> ENABLED = new ModConfigurationKey<bool>("enabled", "Enabled", () => true);
         [AutoRegisterConfigKey]
@@ -198,21 +323,246 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY7 = new ModConfigurationKey<dummy>("DUMMY_7", $"<color={HEADER_TEXT_COLOR}>[ Custom Badges ]</color>", () => new dummy());
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv of urls: \"url1,url2,url3\" resdb or http)", () => "",false ,checkNull);
-
-        private static List<String> BadgesListNames;
-
-        private static HashSet<AvatarManager> Avatars;
+        private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv of urls: \"url1,url2,url3\" resdb or http)", () => "", false, checkNull);
 
         private static BlendMode? blendMode = new BlendMode?();
         private static colorX? tint = new colorX?();
         private static int? maxSize = new int?(128);
+
+        public Patch()
+        {
+        }
+
         public override void OnEngineInit()
         {
             Config = GetConfiguration();
+            InitializeBadgeResources();
             Config.OnThisConfigurationChanged += OnThisConfigurationChanged;
             Config.Save(true);
-            BadgesListNames = new List<string>();
+
+            InitializeActiveBadges();
+
+            Harmony harmony = new Harmony("com.zahndy.FasterBadges");
+            harmony.PatchAll();
+        }
+
+        private static void InitializeBadgeResources()
+        {
+            // Register all badges with the resource manager
+            _resourceManager.RegisterBadge("Under18",
+                new Uri("resdb:///030a337b2f1038c4e833dbef2c53bea30e47117c22ec5b01e65cb59c7e76380b.png"),
+                 Under18);
+            _resourceManager.RegisterBadge("Over18",
+                new Uri("resdb:///874e0c62cf6a8bda5a65ffe7518617e5742339d0c362d5717e8dc6d7e05c5eac.png"),
+                Over18);
+            _resourceManager.RegisterBadge("Minor",
+                new Uri("resdb:///9dff86e3142f439ee273c57a67e5706ec20d60c5e5179dd59f238c8a24e6c923.png"),
+                Minor);
+            _resourceManager.RegisterBadge("Adult",
+                new Uri("resdb:///bf80832420136d2d1029011dd2295a3871c97e4624b90e3d628a935f0301f087.png"),
+                Adult);
+            _resourceManager.RegisterBadge("VeryOld",
+                new Uri("resdb:///830b795065d5ea8f0458f7390c8b0bac4b0df6f453bcec539fd08f46ab99e88b.png"),
+                VeryOld);
+            _resourceManager.RegisterBadge("Fossil",
+                new Uri("resdb:///6815fa0f9656d94cf108054331c4fff47904426eac29044dc71406dba1085c37.png"),
+                Fossil);
+            _resourceManager.RegisterBadge("Avali",
+                new Uri("resdb:///6548f96f2b16bbeb8538dddb7c5c94ff2645823de54cf85b37da97e6b9a8f5c8.png"),
+                Avali);
+            _resourceManager.RegisterBadge("ADHD",
+                new Uri("resdb:///3b57b6ce48b8d1fbe295942ab4883d830d039faaba6be2251d32baebbbbfc71c.png"),
+                ADHD);
+            _resourceManager.RegisterBadge("ADHDFlag",
+                new Uri("resdb:///5c24a24f980300d9066c2eafdf2d57d328404f7bebe37472365a19ec6d2a77f6.png"),
+                ADHDFlag);
+            _resourceManager.RegisterBadge("NOLewd",
+                new Uri("resdb:///c6f7561c0f5b0ca7d986c23a36d0af1681e2779ae1c1e1db9e98b10866345fbf.png"),
+                NOLewd);
+            _resourceManager.RegisterBadge("STOPhantom",
+                new Uri("resdb:///d84873aa4025c12a26b10d51d86bde48caa4a2b8f7c4eba96fff6c324c8ba5cd.png"),
+                STOPhantom);
+            _resourceManager.RegisterBadge("PhantomCircle",
+                new Uri("resdb:///8c8066dc639d9235f0de37a66e90f647534dd670e2166eaf6db2e8753a049266"),
+                PhantomCircle);
+            _resourceManager.RegisterBadge("USFN",
+                new Uri("resdb:///7886e38f5d36f41d7ee3fdcbd520867bbe737a2bfb6cbdde2d0af9c0d20d1d3d.png"),
+                USFN);
+            _resourceManager.RegisterBadge("Abrosexual",
+                new Uri("resdb:///7397dfa5f6eee2fa8e1a5c2cede16d858c09bd60adc376fef6c0ca0727bbdbc9.webp"),
+                Abrosexual);
+            _resourceManager.RegisterBadge("Aegosexual",
+                new Uri("resdb:///86da1550f4615939a96f86048c879a8cd60255173831a6218a6e80606035019d.png"),
+                Aegosexual);
+            _resourceManager.RegisterBadge("Aliquasexual",
+                new Uri("resdb:///3782b6a2f2cd194ec9e3da23f8b09ce348d2c98c3fc6fd79570c42ac79393642.webp"),
+                Aliquasexual);
+            _resourceManager.RegisterBadge("Androsexual",
+                new Uri("resdb:///27f3cf42c0fc39f4b2e9911e056909319a44fdcaeb7a43beb1e8e555ebf1ee0a.webp"),
+                Androsexual);
+            _resourceManager.RegisterBadge("Asexual",
+                new Uri("resdb:///880fe58cae85e2a74cf491b00cfb818e023b40ff4a135a588be6114b8af95b80.webp"),
+                Asexual);
+            _resourceManager.RegisterBadge("Autosexual",
+                new Uri("resdb:///e0d1f42247998d5878820b97a3e072f66fa22e93e777d9df85c5e0350e0bcbf4.webp"),
+                Autosexual);
+            _resourceManager.RegisterBadge("Bisexual",
+                new Uri("resdb:///11c7f8a885c0ae089a1e60e0cf4e9d14da7c2f8f497b7c0865091675c4ce2c6d.webp"),
+                Bisexual);
+            _resourceManager.RegisterBadge("Ceterosexual",
+                new Uri("resdb:///bb618bc8933179128f615ce890b78d18510fb51af704d7ddfdf93b1444b80725.webp"),
+                Ceterosexual);
+            _resourceManager.RegisterBadge("Demisexual",
+                new Uri("resdb:///a9119f05cef46e8c10218b2b16954df0c082cb1e1f7b0ce4abd3b2088ed17bf8.webp"),
+                Demisexual);
+            _resourceManager.RegisterBadge("Fraysexual",
+                new Uri("resdb:///cb5c469859d7830774efb0d4ddc0d3dfa6b32e7944259be2b0cae9cac5eb827f.webp"),
+                Fraysexual);
+            _resourceManager.RegisterBadge("GayGilbert",
+                new Uri("resdb:///537f62fdbdf1e6f4d807c3525ac19f7d6b959f2fe7c5ede2b6ac17e6fa06d773.webp"),
+                GayGilbert);
+            _resourceManager.RegisterBadge("GayMaleFull",
+                new Uri("resdb:///7215acb9ae87241e122e5ecd5eecd96320e5a261f7421634b3b4c1f287ba26f9.webp"),
+                GayMaleFull);
+            _resourceManager.RegisterBadge("GayMaleSimple",
+                new Uri("resdb:///7fe18282b2cfee7e9e1c0a9aed96e01aacc239d128261a28cff1797095d253a9.webp"),
+                GayMaleSimple);
+            _resourceManager.RegisterBadge("Gay",
+                new Uri("resdb:///114e25ca8b823f670a3ba7c5bea1b1f100f28153c0637535ee36dd0a80bfd79e.webp"),
+                Gay);
+            _resourceManager.RegisterBadge("Graysexual",
+                new Uri("resdb:///5abbc8354acd9d8b997aaac98ac1489a4050325a18e5bb4a26338c63ae29febf.webp"),
+                Graysexual);
+            _resourceManager.RegisterBadge("Gynesexual",
+                new Uri("resdb:///46627201f0c3063048180d77f6317643f9fa4793e94171e0ecd19f51d4ab77df.png"),
+                Gynesexual);
+            _resourceManager.RegisterBadge("Iculasexual",
+                new Uri("resdb:///1e245bd9c409a3c72c6382785b9d1b3f477a3fefe1b11d118001e66d7eeeefbe.webp"),
+                Iculasexual);
+            _resourceManager.RegisterBadge("Kalossexual",
+                new Uri("resdb:///64faa58dfbde77d7fb3f985404c700068d25e7f03030bdf72f44712dd9fd9fd3.webp"),
+                Kalossexual);
+            _resourceManager.RegisterBadge("Lesbian",
+                new Uri("resdb:///25bf8ee7717cdd0bf919e653526deb97066e380d58bdc6dc0bec6d790218b78a.webp"),
+                Lesbian);
+            _resourceManager.RegisterBadge("Omnisexual",
+                new Uri("resdb:///403b80574f33d18c66dd8b8442d687b7458bdee109de5dcec0890b7364ee9843.png"),
+                Omnisexual);
+            _resourceManager.RegisterBadge("Pansexual",
+                new Uri("resdb:///287ded390e7dc3cc39d7edec3b8bf9ee2fd7ef5390df8cae036c326580f6971d.webp"),
+                Pansexual);
+            _resourceManager.RegisterBadge("Polysexual",
+                new Uri("resdb:///515d6210069e5e0a498894d93735ab14fbd68a183a47c1d71a96caa3aba1a786.webp"),
+                Polysexual);
+            _resourceManager.RegisterBadge("Proligosexual",
+                new Uri("resdb:///c303e649d2b5fdbe966210350cbca4d394c155ac862a2a188c4a600c9e1418f5.webp"),
+                Proligosexual);
+            _resourceManager.RegisterBadge("Queer",
+                new Uri("resdb:///6a59a796a3762bf0fb3e89623dbfd02086089770fc4f04e4abcb99185e1420cd.webp"),
+                Queer);
+            _resourceManager.RegisterBadge("Agender",
+                new Uri("resdb:///921a4dd7f98e5c9ac0bd030184cd6d573a4f21cd9d74db7c145edf03c412def6.webp"),
+                Agender);
+            _resourceManager.RegisterBadge("Aromantic",
+                new Uri("resdb:///8d7ac4b84b5b382688d24e6dd16d05a6e32dda22e09c6fbab48691f881c0bbc4.webp"),
+                Aromantic);
+            _resourceManager.RegisterBadge("Demiromantic",
+                new Uri("resdb:///02f17173f19ee93bc9fd49cb5114a771832de982b6e2bd6189274b073d7d6999.webp "),
+                Demiromantic);
+            _resourceManager.RegisterBadge("Genderfluid",
+                new Uri("resdb:///d4c84d4bc7df6a2f81a51cde3d841dcd7553477cd22be85154f7ef266b57cc05.webp"),
+                Genderfluid);
+            _resourceManager.RegisterBadge("Genderqueer",
+                new Uri("resdb:///95c0a6bf841facff7d06dd317db281cd4a116e3e45fbc73e959eee977f235028.webp"),
+                Genderqueer);
+            _resourceManager.RegisterBadge("Intersex",
+                new Uri("resdb:///6b65cb069fb631f8fab2d68ca895293622dadd70ccbad3c712a149222127cfa4.webp"),
+                Intersex);
+            _resourceManager.RegisterBadge("Naturist",
+                new Uri("resdb:///0083d37b8bee3ccff5d4a1b493368eb23ed85dc5e17a4c8e3fa2dda1f94bbafb.webp"),
+                Naturist);
+            _resourceManager.RegisterBadge("Nonbinary",
+                new Uri("resdb:///071cf2ec3f64978eba387b56954ed60b40d5765ca93ab695d7e0c5ac127d197b.webp"),
+                Nonbinary);
+            _resourceManager.RegisterBadge("Polyamorous",
+                new Uri("resdb:///c599763137416fee3601cba1e69c621403eb5283579e20bde6bdf44a2babbe58.webp"),
+                Polyamorous);
+            _resourceManager.RegisterBadge("Transgender",
+                new Uri("resdb:///94c9fd36191472b0473dd6f4dbad2de0baeab0b6d83b72ca2285f0cd36e8cd4c.webp"),
+                Transgender);
+            _resourceManager.RegisterBadge("AF",
+                new Uri("resdb:///f9f1c2142d6cce45f38729480a3a457f70774f48fcb915cf9e7db59f9dee5d54.png"),
+                AF);
+            _resourceManager.RegisterBadge("AR",
+                new Uri("resdb:///f110617fe3fc8fc26372ef0ee88f469a4d02186ab1cc42b51fda1261d8ae03b2.png"),
+                AR);
+            _resourceManager.RegisterBadge("BN",
+                new Uri("resdb:///8f1d00595cd2722cda4bfb14eaf632033cf914d9af9709a321c66a8b04312d84.png"),
+                BN);
+            _resourceManager.RegisterBadge("DA",
+                new Uri("resdb:///0f4497240ebac60bf8553a08766a9657660387387da5d0db378316102ec23029.png"),
+                DA);
+            _resourceManager.RegisterBadge("DE",
+                new Uri("resdb:///9f8a177ae178a8ac426b97ea0e58ede1143ca32ef3a2a05aef1e2f14e7bd7080.png"),
+                DE);
+            _resourceManager.RegisterBadge("EN",
+                new Uri("resdb:///ec1225cb99da4205f5f37dcabd72bc0ae7ebc2b8e706a9817d236f8ef18a90bd.png"),
+                EN);
+            _resourceManager.RegisterBadge("ES",
+                new Uri("resdb:///b241f3e7ed8bfc158bd2ba67fd91c33dd710e8ef504e844b41ccb9fc68d29520.png"),
+                ES);
+            _resourceManager.RegisterBadge("FI",
+                new Uri("resdb:///b5ba76422dec60db608f68ad7d40af8583e3e59653889707410b0acaef729d4f.png"),
+                FI);
+            _resourceManager.RegisterBadge("FR",
+                new Uri("resdb:///c6b29e2ec07370deca43067d3a928b8dd6a4b4d7a50f97106becae49869fb267.png"),
+                FR);
+            _resourceManager.RegisterBadge("HI",
+                new Uri("resdb:///e91793ee1cdfa821ead79bb72eb4c00e5e1658fdcc35ac705f4c26d28496fdb6.png"),
+                HI);
+            _resourceManager.RegisterBadge("HU",
+                new Uri("resdb:///0c4113b6ba52d09b1882a510d3634c38a9c88bb3d42caf7e3050b26c0a52ca5e.png"),
+                HU);
+            _resourceManager.RegisterBadge("IT",
+                new Uri("resdb:///9e46fd023008e6e7cee2b2217ffe325c92604f72730eacbb63ca46b956cc73aa.png"),
+                IT);
+            _resourceManager.RegisterBadge("JA",
+                new Uri("resdb:///e520e3d7c0ee42d353f79607614db651643294ea6af750fba9ac4a860b268268.png"),
+                JA);
+            _resourceManager.RegisterBadge("KO",
+                new Uri("resdb:///0c5d8c10070c89b26aabdb2c15e9976de4658ce8cdac9187c9becb029af3bcd1.png"),
+                KO);
+            _resourceManager.RegisterBadge("LT",
+                new Uri("resdb:///c49ba42d38d6e9e210acd44fd8be07428ab84bf42374ec533cbc4eeaf262d20c.png"),
+                LT);
+            _resourceManager.RegisterBadge("MR",
+                new Uri("resdb:///8f78afb4be2944336aa7dc2a066576d12df72a4c8929af9ca46187cc7464d446.png"),
+                MR);
+            _resourceManager.RegisterBadge("NL",
+                new Uri("resdb:///3a4b56f165aad42de75432680fae47dd06dd2a35d79d249498e828c21f0a9293.png"),
+                NL);
+            _resourceManager.RegisterBadge("NO",
+                new Uri("resdb:///ef322f0e9dd3352809739c280e70ae65ae342332a93c65586f770f94814f418c.png"),
+                NO);
+            _resourceManager.RegisterBadge("PL",
+                new Uri("resdb:///f6f37a9a7823e1fc4057a9673f244b68ca36455c45cb5433d9a8d64cb75a3db7.png"),
+                PL);
+            _resourceManager.RegisterBadge("PT",
+                new Uri("resdb:///56ec0c6846bf0484615ddf8b4fe1e38038255b71b8e9e17270a1b7a590cac868.png"),
+                PT);
+            _resourceManager.RegisterBadge("RU",
+                new Uri("resdb:///0ee18103333617e52e4b5607a1631c5655c38a3a9f632737bf0ac2d52842fabd.png"),
+                RU);
+            _resourceManager.RegisterBadge("SV",
+                new Uri("resdb:///d7dd94e50e366757491fd2f695f5fb45061925e6ac59636a957b3a85c7ead6f5.png"),
+                SV);
+            _resourceManager.RegisterBadge("ZH",
+                new Uri("resdb:///5a59c0ac93743f931e93b3889736fd776a2122744bf4dbed3a8b343f04f2974b.png"),
+                ZH);
+        }
+
+        private void InitializeActiveBadges()
+        {
             foreach (ModConfigurationKey configurationItemDefinition in Config.ConfigurationItemDefinitions)
             {
                 if (configurationItemDefinition.ValueType() != typeof(dummy) && configurationItemDefinition != ENABLED)
@@ -220,496 +570,127 @@ namespace FasterBadges
                     if (Config.GetValue(configurationItemDefinition).GetType() == typeof(bool))
                     {
                         bool value = (bool)Config.GetValue(configurationItemDefinition);
-                        if (value == true)
+                        if (value)
                         {
                             BadgesListNames.Add(configurationItemDefinition.Name);
                         }
-
                     }
                 }
             }
-            Harmony harmony = new Harmony("com.zahndy.FasterBadges");
-            Avatars = new HashSet<AvatarManager>();
-            harmony.PatchAll();
         }
-        private static (Uri, ModConfigurationKey<bool>, bool) BadgesSwitch(string Name)
-        {
-            Uri url = null;
-            ModConfigurationKey<bool> changedvar = null;
-            bool skip = false;
-            switch (Name)
-            {
-                case "Under18": 
-                    changedvar = Under18;
-                    url = new Uri("resdb:///030a337b2f1038c4e833dbef2c53bea30e47117c22ec5b01e65cb59c7e76380b.png");
-                    break;
-                case "Over18":
-                    changedvar = Over18;
-                    url = new Uri("resdb:///874e0c62cf6a8bda5a65ffe7518617e5742339d0c362d5717e8dc6d7e05c5eac.png");
-                    break;
-                case "Minor":
-                    changedvar = Minor;
-                    url = new Uri("resdb:///9dff86e3142f439ee273c57a67e5706ec20d60c5e5179dd59f238c8a24e6c923.png");
-                    break;
-                case "Adult":
-                    changedvar = Adult;
-                    url = new Uri("resdb:///bf80832420136d2d1029011dd2295a3871c97e4624b90e3d628a935f0301f087.png");
-                    break;
-                case "VeryOld":
-                    changedvar = VeryOld;
-                    url = new Uri("resdb:///830b795065d5ea8f0458f7390c8b0bac4b0df6f453bcec539fd08f46ab99e88b.png");
-                    break;
-                case "Fossil":
-                    changedvar = Fossil;
-                    url = new Uri("resdb:///6815fa0f9656d94cf108054331c4fff47904426eac29044dc71406dba1085c37.png"); 
-                    break;
-                case "Avali":
-                    changedvar = Avali;
-                    url = new Uri("resdb:///6548f96f2b16bbeb8538dddb7c5c94ff2645823de54cf85b37da97e6b9a8f5c8.png");
-                    break;
-                case "ADHD":
-                    changedvar = ADHD;
-                    url = new Uri("resdb:///3b57b6ce48b8d1fbe295942ab4883d830d039faaba6be2251d32baebbbbfc71c.png");
-                    break;
-                case "ADHDFlag":
-                    changedvar = ADHDFlag;
-                    url = new Uri("resdb:///5c24a24f980300d9066c2eafdf2d57d328404f7bebe37472365a19ec6d2a77f6.png");
-                    break;
-                case "NOLewd":
-                    changedvar = NOLewd;
-                    url = new Uri("resdb:///c6f7561c0f5b0ca7d986c23a36d0af1681e2779ae1c1e1db9e98b10866345fbf.png"); 
-                    break;
-                case "STOPhantom":
-                    changedvar = STOPhantom;
-                    url = new Uri("resdb:///d84873aa4025c12a26b10d51d86bde48caa4a2b8f7c4eba96fff6c324c8ba5cd.png");
-                    break;
-                case "PhantomCircle":
-                    changedvar = PhantomCircle;
-                    url = new Uri("resdb:///8c8066dc639d9235f0de37a66e90f647534dd670e2166eaf6db2e8753a049266");
-                    break;
-                case "USFN":
-                    changedvar = USFN;
-                    url = new Uri("resdb:///7886e38f5d36f41d7ee3fdcbd520867bbe737a2bfb6cbdde2d0af9c0d20d1d3d.png");
-                    break;
-                case "CustomBadges":
-                    skip = true;
-                    break;
-                case "Abrosexual":
-                    changedvar = Abrosexual;
-                    url = new Uri("resdb:///7397dfa5f6eee2fa8e1a5c2cede16d858c09bd60adc376fef6c0ca0727bbdbc9.webp");
-                    break;
-                case "Aegosexual":
-                    changedvar = Aegosexual;
-                    url = new Uri("resdb:///86da1550f4615939a96f86048c879a8cd60255173831a6218a6e80606035019d.png");
-                    break;
-                case "Aliquasexual":
-                    changedvar = Aliquasexual;
-                    url = new Uri("resdb:///3782b6a2f2cd194ec9e3da23f8b09ce348d2c98c3fc6fd79570c42ac79393642.webp");
-                    break;
-                case "Androsexual":
-                    changedvar = Androsexual;
-                    url = new Uri("resdb:///27f3cf42c0fc39f4b2e9911e056909319a44fdcaeb7a43beb1e8e555ebf1ee0a.webp");
-                    break;
-                case "Asexual":
-                    changedvar = Asexual;
-                    url = new Uri("resdb:///880fe58cae85e2a74cf491b00cfb818e023b40ff4a135a588be6114b8af95b80.webp");
-                    break;
-                case "Autosexual":
-                    changedvar = Autosexual;
-                    url = new Uri("resdb:///e0d1f42247998d5878820b97a3e072f66fa22e93e777d9df85c5e0350e0bcbf4.webp");
-                    break;
-                case "Bisexual":
-                    changedvar = Bisexual;
-                    url = new Uri("resdb:///11c7f8a885c0ae089a1e60e0cf4e9d14da7c2f8f497b7c0865091675c4ce2c6d.webp");
-                    break;
-                case "Ceterosexual":
-                    changedvar = Ceterosexual;
-                    url = new Uri("resdb:///bb618bc8933179128f615ce890b78d18510fb51af704d7ddfdf93b1444b80725.webp");
-                    break;
-                case "Demisexual":
-                    changedvar = Demisexual;
-                    url = new Uri("resdb:///a9119f05cef46e8c10218b2b16954df0c082cb1e1f7b0ce4abd3b2088ed17bf8.webp");
-                    break;
-                case "Fraysexual":
-                    changedvar = Fraysexual;
-                    url = new Uri("resdb:///cb5c469859d7830774efb0d4ddc0d3dfa6b32e7944259be2b0cae9cac5eb827f.webp");
-                    break;
-                case "GayGilbert":
-                    changedvar = GayGilbert;
-                    url = new Uri("resdb:///537f62fdbdf1e6f4d807c3525ac19f7d6b959f2fe7c5ede2b6ac17e6fa06d773.webp");
-                    break;
-                case "GayMaleFull":
-                    changedvar = GayMaleFull;
-                    url = new Uri("resdb:///7215acb9ae87241e122e5ecd5eecd96320e5a261f7421634b3b4c1f287ba26f9.webp");
-                    break;
-                case "GayMaleSimple":
-                    changedvar = GayMaleSimple;
-                    url = new Uri("resdb:///7fe18282b2cfee7e9e1c0a9aed96e01aacc239d128261a28cff1797095d253a9.webp");
-                    break;
-                case "Gay":
-                    changedvar = Gay;
-                    url = new Uri("resdb:///114e25ca8b823f670a3ba7c5bea1b1f100f28153c0637535ee36dd0a80bfd79e.webp");
-                    break;
-                case "Graysexual":
-                    changedvar = Graysexual;
-                    url = new Uri("resdb:///5abbc8354acd9d8b997aaac98ac1489a4050325a18e5bb4a26338c63ae29febf.webp");
-                    break;
-                case "Gynesexual":
-                    changedvar = Gynesexual;
-                    url = new Uri("resdb:///46627201f0c3063048180d77f6317643f9fa4793e94171e0ecd19f51d4ab77df.png");
-                    break;
-                case "Iculasexual":
-                    changedvar = Iculasexual;
-                    url = new Uri("resdb:///1e245bd9c409a3c72c6382785b9d1b3f477a3fefe1b11d118001e66d7eeeefbe.webp");
-                    break;
-                case "Kalossexual":
-                    changedvar = Kalossexual;
-                    url = new Uri("resdb:///64faa58dfbde77d7fb3f985404c700068d25e7f03030bdf72f44712dd9fd9fd3.webp");
-                    break;
-                case "Lesbian":
-                    changedvar = Lesbian;
-                    url = new Uri("resdb:///25bf8ee7717cdd0bf919e653526deb97066e380d58bdc6dc0bec6d790218b78a.webp");
-                    break;
-                case "Omnisexual":
-                    changedvar = Omnisexual;
-                    url = new Uri("resdb:///403b80574f33d18c66dd8b8442d687b7458bdee109de5dcec0890b7364ee9843.png");
-                    break;
-                case "Pansexual":
-                    changedvar = Pansexual;
-                    url = new Uri("resdb:///287ded390e7dc3cc39d7edec3b8bf9ee2fd7ef5390df8cae036c326580f6971d.webp");
-                    break;
-                case "Polysexual":
-                    changedvar = Polysexual;
-                    url = new Uri("resdb:///515d6210069e5e0a498894d93735ab14fbd68a183a47c1d71a96caa3aba1a786.webp");
-                    break;
-                case "Proligosexual":
-                    changedvar = Proligosexual;
-                    url = new Uri("resdb:///c303e649d2b5fdbe966210350cbca4d394c155ac862a2a188c4a600c9e1418f5.webp");
-                    break;
-                case "Queer":
-                    changedvar = Queer;
-                    url = new Uri("resdb:///6a59a796a3762bf0fb3e89623dbfd02086089770fc4f04e4abcb99185e1420cd.webp");
-                    break;
-                case "Agender":
-                    changedvar = Agender;
-                    url = new Uri("resdb:///921a4dd7f98e5c9ac0bd030184cd6d573a4f21cd9d74db7c145edf03c412def6.webp");
-                    break;
-                case "Aromantic":
-                    changedvar = Aromantic;
-                    url = new Uri("resdb:///8d7ac4b84b5b382688d24e6dd16d05a6e32dda22e09c6fbab48691f881c0bbc4.webp");
-                    break;
-                case "Demiromantic":
-                    changedvar = Demiromantic;
-                    url = new Uri("resdb:///02f17173f19ee93bc9fd49cb5114a771832de982b6e2bd6189274b073d7d6999.webp ");
-                    break;
-                case "Genderfluid":
-                    changedvar = Genderfluid;
-                    url = new Uri("resdb:///d4c84d4bc7df6a2f81a51cde3d841dcd7553477cd22be85154f7ef266b57cc05.webp");
-                    break;
-                case "Genderqueer":
-                    changedvar = Genderqueer;
-                    url = new Uri("resdb:///95c0a6bf841facff7d06dd317db281cd4a116e3e45fbc73e959eee977f235028.webp");
-                    break;
-                case "Intersex":
-                    changedvar = Intersex;
-                    url = new Uri("resdb:///6b65cb069fb631f8fab2d68ca895293622dadd70ccbad3c712a149222127cfa4.webp");
-                    break;
-                case "Naturist":
-                    changedvar = Naturist;
-                    url = new Uri("resdb:///0083d37b8bee3ccff5d4a1b493368eb23ed85dc5e17a4c8e3fa2dda1f94bbafb.webp");
-                    break;
-                case "Nonbinary":
-                    changedvar = Nonbinary;
-                    url = new Uri("resdb:///071cf2ec3f64978eba387b56954ed60b40d5765ca93ab695d7e0c5ac127d197b.webp");
-                    break;
-                case "Polyamorous":
-                    changedvar = Polyamorous;
-                    url = new Uri("resdb:///c599763137416fee3601cba1e69c621403eb5283579e20bde6bdf44a2babbe58.webp");
-                    break;
-                case "Transgender":
-                    changedvar = Transgender;
-                    url = new Uri("resdb:///94c9fd36191472b0473dd6f4dbad2de0baeab0b6d83b72ca2285f0cd36e8cd4c.webp");
-                    break;
-                case "AF":
-                    changedvar = AF;
-                    url = new Uri("resdb:///f9f1c2142d6cce45f38729480a3a457f70774f48fcb915cf9e7db59f9dee5d54.png");
-                    break;
-                case "AR":
-                    changedvar = AR;
-                    url = new Uri("resdb:///f110617fe3fc8fc26372ef0ee88f469a4d02186ab1cc42b51fda1261d8ae03b2.png");
-                    break;
-                case "BN":
-                    changedvar = BN;
-                    url = new Uri("resdb:///8f1d00595cd2722cda4bfb14eaf632033cf914d9af9709a321c66a8b04312d84.png");
-                    break;
-                case "DA":
-                    changedvar = DA;
-                    url = new Uri("resdb:///0f4497240ebac60bf8553a08766a9657660387387da5d0db378316102ec23029.png");
-                    break;
-                case "DE":
-                    changedvar = DE;
-                    url = new Uri("resdb:///9f8a177ae178a8ac426b97ea0e58ede1143ca32ef3a2a05aef1e2f14e7bd7080.png");
-                    break;
-                case "EN":
-                    changedvar = EN;
-                    url = new Uri("resdb:///ec1225cb99da4205f5f37dcabd72bc0ae7ebc2b8e706a9817d236f8ef18a90bd.png");
-                    break;
-                case "ES":
-                    changedvar = ES;
-                    url = new Uri("resdb:///b241f3e7ed8bfc158bd2ba67fd91c33dd710e8ef504e844b41ccb9fc68d29520.png");
-                    break;
-                case "FI":
-                    changedvar = FI;
-                    url = new Uri("resdb:///b5ba76422dec60db608f68ad7d40af8583e3e59653889707410b0acaef729d4f.png");
-                    break;
-                case "FR":
-                    changedvar = FR;
-                    url = new Uri("resdb:///c6b29e2ec07370deca43067d3a928b8dd6a4b4d7a50f97106becae49869fb267.png");
-                    break;
-                case "HI":
-                    changedvar = HI;
-                    url = new Uri("resdb:///e91793ee1cdfa821ead79bb72eb4c00e5e1658fdcc35ac705f4c26d28496fdb6.png");
-                    break;
-                case "HU":
-                    changedvar = HU;
-                    url = new Uri("resdb:///0c4113b6ba52d09b1882a510d3634c38a9c88bb3d42caf7e3050b26c0a52ca5e.png");
-                    break;
-                case "IT":
-                    changedvar = IT;
-                    url = new Uri("resdb:///9e46fd023008e6e7cee2b2217ffe325c92604f72730eacbb63ca46b956cc73aa.png");
-                    break;
-                case "JA":
-                    changedvar = JA;
-                    url = new Uri("resdb:///e520e3d7c0ee42d353f79607614db651643294ea6af750fba9ac4a860b268268.png");
-                    break;
-                case "KO":
-                    changedvar = KO;
-                    url = new Uri("resdb:///0c5d8c10070c89b26aabdb2c15e9976de4658ce8cdac9187c9becb029af3bcd1.png");
-                    break;
-                case "LT":
-                    changedvar = LT;
-                    url = new Uri("resdb:///c49ba42d38d6e9e210acd44fd8be07428ab84bf42374ec533cbc4eeaf262d20c.png");
-                    break;
-                case "MR":
-                    changedvar = MR;
-                    url = new Uri("resdb:///8f78afb4be2944336aa7dc2a066576d12df72a4c8929af9ca46187cc7464d446.png");
-                    break;
-                case "NL":
-                    changedvar = NL;
-                    url = new Uri("resdb:///3a4b56f165aad42de75432680fae47dd06dd2a35d79d249498e828c21f0a9293.png");
-                    break;
-                case "NO":
-                    changedvar = NO;
-                    url = new Uri("resdb:///ef322f0e9dd3352809739c280e70ae65ae342332a93c65586f770f94814f418c.png");
-                    break;
-                case "PL":
-                    changedvar = PL;
-                    url = new Uri("resdb:///f6f37a9a7823e1fc4057a9673f244b68ca36455c45cb5433d9a8d64cb75a3db7.png");
-                    break;
-                case "PT":
-                    changedvar = PT;
-                    url = new Uri("resdb:///56ec0c6846bf0484615ddf8b4fe1e38038255b71b8e9e17270a1b7a590cac868.png");
-                    break;
-                case "RU":
-                    changedvar = RU;
-                    url = new Uri("resdb:///0ee18103333617e52e4b5607a1631c5655c38a3a9f632737bf0ac2d52842fabd.png");
-                    break;
-                case "SV":
-                    changedvar = SV;
-                    url = new Uri("resdb:///d7dd94e50e366757491fd2f695f5fb45061925e6ac59636a957b3a85c7ead6f5.png");
-                    break;
-                case "ZH":
-                    changedvar = ZH;
-                    url = new Uri("resdb:///5a59c0ac93743f931e93b3889736fd776a2122744bf4dbed3a8b343f04f2974b.png");
-                    break;
-                default:
-                    break;
-            }
-            return (url,changedvar, skip);
-        }
+
         private void OnThisConfigurationChanged(ConfigurationChangedEvent configurationChangedEvent)
         {
-            if (configurationChangedEvent.Key == ENABLED) 
+            if (configurationChangedEvent.Key == ENABLED)
             {
-                if (Config.GetValue(ENABLED))
-                {
-                    Msg(" --- ENABLED --- ");
-                    CleanBadges();
-                    foreach (string badge in BadgesListNames) 
-                    {
-                        var BadgeData = BadgesSwitch(badge);
-                        UpdateBadges(badge, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
-                    }
-                    List<String> CustomBadgesList = Config.GetValue(CustomBadges).Trim(',').Split(',').ToList();
-                    if (CustomBadgesList.Count > 0)
-                    {
-                        foreach (String customBadge in CustomBadgesList)
-                        {
-                            if (customBadge.Length > 10)
-                            {
-                                Uri burl = new Uri(customBadge);
-                                foreach (AvatarManager av in Avatars)
-                                {
-                                    av.Slot.RunSynchronously(delegate
-                                    {
-                                        av.AddIconBadge(burl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
-                                    });
-                                }
-                            }
-                        }
-                    }
-                }
-                else 
-                {
-                    Msg(" --- DISABLED --- ");
-                    CleanBadges();
-                }               
+                HandleEnabledStateChange();
             }
-            else if(configurationChangedEvent.Key == CustomBadges) //custom string has updated
+            else if (configurationChangedEvent.Key == CustomBadges)
             {
-                
-                Avatars.ElementAt(0).Slot.RunSynchronously(delegate 
-                { 
-                    CleanBadges();
-                    if(CustomBadges != null) 
-                    { 
-                        string newstr = Config.GetValue(CustomBadges).Trim(',', ' ');
-                        List<String> newList = newstr.Split(',').ToList();
-                        foreach (AvatarManager avatarManager in Avatars)
-                        {
-                            avatarManager.RunSynchronously(delegate
-                            {
-                                Msg(" --- Re-Adding Custom Badges --- ");
-                                if (newList.Count > 0)
-                                {
-                                    foreach (String customBadge in newList)
-                                    {
-                                        if (customBadge.Length > 10)
-                                        {
-                                            Uri lurl = new Uri(customBadge);
-                                            avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
-                                        }
-                                    }
-                                }                            
-                            });
-                        }
-                    }
-                    Msg(" --- Re-Adding Badges --- ");
-                    foreach (string badge in BadgesListNames)
-                    {
-                        var BadgeData = BadgesSwitch(badge);
-                        UpdateBadges(badge, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
-                    }
-                });            
+                HandleCustomBadgesChange();
             }
             else
             {
-                String badgeName = configurationChangedEvent.Key.Name;
-                var BadgeData = BadgesSwitch(badgeName);
-                UpdateBadges(badgeName, BadgeData.Item1, BadgeData.Item2, BadgeData.Item3);
+                HandleIndividualBadgeChange(configurationChangedEvent.Key.Name);
             }
         }
-        private static void UpdateBadges(string _badgeName,Uri url, ModConfigurationKey<bool> changedvar, bool skip)
+
+        private void HandleEnabledStateChange()
         {
-            if (!skip) 
+            if (Config.GetValue(ENABLED))
             {
-                bool KeyEnabled = Config.GetValue(changedvar);
-                if (KeyEnabled)
+                Msg(" --- ENABLED --- ");
+                _avatarHandler.CleanBadges();
+                RefreshAllBadges();
+            }
+            else
+            {
+                Msg(" --- DISABLED --- ");
+                _avatarHandler.CleanBadges();
+            }
+        }
+
+        private void HandleCustomBadgesChange()
+        {
+            if (!String.IsNullOrEmpty(Config.GetValue(CustomBadges)))
+            {
+                _avatarHandler.CleanBadges();
+                RefreshCustomBadges();
+                RefreshAllBadges();
+            }
+        }
+
+        private void HandleIndividualBadgeChange(string badgeName)
+        {
+            var badgeData = _resourceManager.GetBadgeData(badgeName);
+            _avatarHandler.UpdateBadges(badgeName, badgeData.url, badgeData.config);
+        }
+
+        private void RefreshAllBadges()
+        {
+            foreach (string badge in BadgesListNames)
+            {
+                var badgeData = _resourceManager.GetBadgeData(badge);
+                _avatarHandler.UpdateBadges(badge, badgeData.url, badgeData.config);
+            }
+        }
+
+        private void RefreshCustomBadges()
+        {
+            string customBadgesStr = Config.GetValue(CustomBadges).Trim(',', ' ');
+            List<String> customBadges = customBadgesStr.Split(',').ToList();
+
+            foreach (String customBadge in customBadges)
+            {
+                if (customBadge.Length > 10)
                 {
-                    if (!BadgesListNames.Contains(_badgeName))
+                    Uri badgeUrl = new Uri(customBadge);
+                    foreach (AvatarManager av in _avatarHandler.GetAvatars())
                     {
-                        BadgesListNames.Add(_badgeName);
-                    }
-                }
-                else
-                {
-                    if (BadgesListNames.Contains(_badgeName))
-                    {
-                        BadgesListNames.Remove(_badgeName);
-                    }
-                }
-                if (url != null)
-                {
-                    foreach (AvatarManager av in Avatars)
-                    {
-                        av.Slot.RunSynchronously(delegate
+                        av.Slot.RunSynchronously(() =>
                         {
-                            HashSet<string> hashSet = Pool.BorrowHashSet<string>();
-                            foreach (Slot child in av.BadgeTemplates.Children)
-                            {
-                                hashSet.Add(child.Name);
-                            }
-                            String BadgeNameID = "Extra Custom Badge-" + url.ToString().Substring(url.ToString().Length - 10, 5);
-                            if (!hashSet.Contains(BadgeNameID))
-                            {
-                                if (KeyEnabled)
-                                {
-                                    av.AddIconBadge(url, BadgeNameID, blendMode, tint, TextureFilterMode.Bilinear, maxSize);
-                                }
-                            }
-                            else
-                            {
-                                if (!KeyEnabled)
-                                {
-                                    av.BadgeTemplates.FindChild(BadgeNameID).Destroy();
-                                }
-                            }
-                            av.UpdateBadges();
+                            av.AddIconBadge(badgeUrl,
+                                "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5),
+                                blendMode, tint, TextureFilterMode.Bilinear, maxSize);
                         });
                     }
                 }
             }
-            else //CustomBadges csv
-            {
-                foreach (AvatarManager av in Avatars)
-                {
-                    av.Slot.RunSynchronously(delegate
-                    {
-                        if (CustomBadges != null)
-                        {
-                            List<String> CustomBadgesList = Config.GetValue(CustomBadges).Trim(',').Split(',').ToList();
-                            foreach (String customBadge in CustomBadgesList)
-                            {
-                                av.BadgeTemplates.FindChild("Extra Badge-", true, true, 1).Destroy();
-                            }
-                            foreach (String customBadge in CustomBadgesList)
-                            {
-                                if (customBadge.Length > 10)
-                                {
-                                    Uri burl = new Uri(customBadge);
-                                    av.AddIconBadge(burl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
-                                }
-                            }
-                            av.UpdateBadges();
-                        }
-                    });
-
-                }
-            }           
         }
-        private static void CleanBadges()
+        private static void RefreshCustomBadgesForAvatar(AvatarManager avatarManager)
         {
-            foreach (AvatarManager av in Avatars)
+            if (String.IsNullOrEmpty(Config.GetValue(CustomBadges))) return;
+
+            String[] badges = Config.GetValue(CustomBadges).Trim(',').Split(',');
+            if (badges.Length == 0 || badges[0].Length < 10) return;
+
+            foreach (String customBadge in badges)
             {
-                User user = av.Slot.ActiveUser;
-                if (user.IsLocalUser)
+                if (customBadge.Length > 10)
                 {
-                    av.Slot.RunSynchronously(delegate
+                    Uri lurl = new Uri(customBadge);
+                    avatarManager.AddIconBadge(lurl,
+                        "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5),
+                        blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                }
+            }
+        }
+
+        private static void RefreshAllBadgesForAvatar(AvatarManager avatarManager)
+        {
+            foreach (string badge in BadgesListNames)
+            {
+                var badgeData = _resourceManager.GetBadgeData(badge);
+                if (!badgeData.skip && badgeData.url != null)
+                {
+                    bool keyEnabled = Config.GetValue(badgeData.config);
+                    if (keyEnabled)
                     {
-                        foreach (string child in BadgesListNames)
-                        {
-                            av.BadgeTemplates.FindChild("Extra ", true, true, 1).Destroy(); 
-                        }
-                        if (CustomBadges != null)
-                        {
-                            String[] badges = Config.GetValue(CustomBadges).Trim(',').Split(',');
-                            foreach (String customBadge in badges)
-                            {
-                                av.BadgeTemplates.FindChild("Extra ", true, true, 1).Destroy();
-                            }
-                        }
-                        av.UpdateBadges();
-                    });
+                        String badgeNameId = "Extra Custom Badge-" +
+                            badgeData.url.ToString().Substring(badgeData.url.ToString().Length - 10, 5);
+                        avatarManager.AddIconBadge(badgeData.url, badgeNameId,
+                            blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                    }
                 }
             }
         }
@@ -719,53 +700,42 @@ namespace FasterBadges
         {
             [HarmonyPrefix]
             [HarmonyPatch("OnAttach")]
-            static void Prefix(AvatarBadgeManager __instance) 
+            static void Prefix(AvatarBadgeManager __instance)
             {
-                if (Config.GetValue(ENABLED)) 
+                if (!Config.GetValue(ENABLED)) return;
+
+                User user = __instance.Slot.ActiveUser;
+                if (user?.UserName == null || !user.IsLocalUser) return;
+
+                if (String.IsNullOrEmpty(CustomBadges.ToString()) &&
+                    CustomBadges == null &&
+                    BadgesListNames.Count == 0) return;
+
+                UserRoot userRoot = user.Root;
+                AvatarManager avatarManager = userRoot.Slot.GetComponent<AvatarManager>();
+                if (avatarManager == null) return;
+
+                if (avatarManager.Slot.Name == "UserRoot") return;
+
+                HandleAvatarAttachment(avatarManager);
+            }
+
+            private static void HandleAvatarAttachment(AvatarManager avatarManager)
+            {
+                Msg(" triggered avatarManager Slot: " + avatarManager.Slot.Name);
+                Msg(" avatarManager ActiveUser: " + avatarManager.Slot.ActiveUser.ToString());
+
+                avatarManager.RunSynchronously(() =>
                 {
-                    User user = __instance.Slot.ActiveUser;
-                    if (user.UserName != null)
-                    {
-                        if (user.IsLocalUser)
-                        {
-                            if ((!String.IsNullOrEmpty(CustomBadges.ToString()) && CustomBadges != null) || BadgesListNames.Count > 0)
-                            {                               
-                                UserRoot userRoot = user.Root;
-                                AvatarManager avatarManager = userRoot.Slot.GetComponent<AvatarManager>();
-                                if (avatarManager != null)
-                                {
-                                    if (!Avatars.Contains(avatarManager))
-                                    {
-                                        avatarManager.RunSynchronously(delegate
-                                        {
-                                            avatarManager.Disposing += (field) => { Avatars.Remove(avatarManager); };
-                                            Avatars.Add(avatarManager);
-                                            Msg(" --- Adding Custom Badges --- ");
-                                            String[] badges = Config.GetValue(CustomBadges).Trim(',').Split(',');
-                                            if (badges.Count() > 0 && badges[0].Length > 10)
-                                            {
-                                                foreach (String customBadge in badges)
-                                                {
-                                                    if (customBadge.Length > 10)
-                                                    {
-                                                        Uri lurl = new Uri(customBadge);
-                                                        avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5), blendMode, tint, TextureFilterMode.Bilinear, maxSize);
-                                                    }
-                                                }
-                                            }
-                                            foreach (string badge in BadgesListNames)
-                                            {
-                                                var badgeData = BadgesSwitch(badge);
-                                                UpdateBadges(badge, badgeData.Item1, badgeData.Item2, badgeData.Item3);
-                                            }
-                                        });
-                                    }
-                                }
-                                
-                            }
-                        }
-                    }
-                }
+                    // Add to avatar handler
+                    _avatarHandler.AddAvatar(avatarManager);
+
+                    Msg(" --- Adding Custom Badges --- ");
+                    Msg(" Current avatarManagers: " + _avatarHandler.GetAvatars().ToArray().ToString());
+
+                    RefreshCustomBadgesForAvatar(avatarManager);
+                    RefreshAllBadgesForAvatar(avatarManager);
+                });
             }
         }
     }
