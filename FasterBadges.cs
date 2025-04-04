@@ -35,10 +35,10 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY = new ModConfigurationKey<dummy>("dummy", "For Accessibility badges please see https://wiki.resonite.com/Resonite_Bot#Assignable_Badges");
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY1 = new ModConfigurationKey<dummy>("dummyLine", $"<color={HEADER_TEXT_COLOR}>---------------------------------------------------------------------------------------------------------------------------------</color>");
+        private static readonly ModConfigurationKey<dummy> DUMMY1 = new ModConfigurationKey<dummy>("dummy1Line", $"<color={HEADER_TEXT_COLOR}>---------------------------------------------------------------------------------------------------------------------------------</color>");
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY5 = new ModConfigurationKey<dummy>("DUMMY_5", $"<color={HEADER_TEXT_COLOR}>[ Age Related ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY2 = new ModConfigurationKey<dummy>("DUMMY_2", $"<color={HEADER_TEXT_COLOR}>[ Age Related ]</color>", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Under18 = new ModConfigurationKey<bool>("Under18", "Under 18", () => false);
@@ -54,7 +54,7 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Fossil = new ModConfigurationKey<bool>("Fossil", "Fossil", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY6 = new ModConfigurationKey<dummy>("DUMMY_6", $"<color={HEADER_TEXT_COLOR}>[ Various ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY3 = new ModConfigurationKey<dummy>("DUMMY_3", $"<color={HEADER_TEXT_COLOR}>[ Various ]</color>", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Avali = new ModConfigurationKey<bool>("Avali", "Avali", () => false);
@@ -72,7 +72,7 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> USFN = new ModConfigurationKey<bool>("USFN", "USFN", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY2 = new ModConfigurationKey<dummy>("DUMMY_1", $"<color={HEADER_TEXT_COLOR}>[ Heart Pride ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY4 = new ModConfigurationKey<dummy>("DUMMY_4", $"<color={HEADER_TEXT_COLOR}>[ Heart Pride ]</color>", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Abrosexual = new ModConfigurationKey<bool>("Abrosexual", "Abrosexual", () => false);
@@ -124,7 +124,7 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Queer = new ModConfigurationKey<bool>("Queer", "Queer", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY3 = new ModConfigurationKey<dummy>("DUMMY_2", $"<color={HEADER_TEXT_COLOR}>[ Diamond Identity ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY5 = new ModConfigurationKey<dummy>("DUMMY_5", $"<color={HEADER_TEXT_COLOR}>[ Diamond Identity ]</color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Agender = new ModConfigurationKey<bool>("Agender", "Agender", () => false);
         [AutoRegisterConfigKey]
@@ -145,8 +145,58 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Polyamorous = new ModConfigurationKey<bool>("Polyamorous", "Polyamorous", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Transgender = new ModConfigurationKey<bool>("Transgender", "Transgender", () => false);
+
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY4 = new ModConfigurationKey<dummy>("DUMMY_4", $"<color={HEADER_TEXT_COLOR}>[ Custom Badges ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY6 = new ModConfigurationKey<dummy>("DUMMY_6", $"<color={HEADER_TEXT_COLOR}>[ Languages ]</color>", () => new dummy());
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> AF = new ModConfigurationKey<bool>("AF", "Afrikaans", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> AR = new ModConfigurationKey<bool>("AR", "Arabic", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> BN = new ModConfigurationKey<bool>("BN", "Bengali", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> DA = new ModConfigurationKey<bool>("DA", "Danish", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> DE = new ModConfigurationKey<bool>("DE", "German", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> EN = new ModConfigurationKey<bool>("EN", "English", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> ES = new ModConfigurationKey<bool>("ES", "Spanish", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> FI = new ModConfigurationKey<bool>("FI", "Finnish", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> FR = new ModConfigurationKey<bool>("FR", "French", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> HI = new ModConfigurationKey<bool>("HI", "Hindi", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> HU = new ModConfigurationKey<bool>("HU", "Hungarian", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> IT = new ModConfigurationKey<bool>("IT", "Italian", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> JA = new ModConfigurationKey<bool>("JA", "Japanese", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> KO = new ModConfigurationKey<bool>("KO", "Korean", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> LT = new ModConfigurationKey<bool>("LT", "Lithuanian", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> MR = new ModConfigurationKey<bool>("MR", "Marathi", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> NL = new ModConfigurationKey<bool>("NL", "Dutch", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> NO = new ModConfigurationKey<bool>("NO", "Norwegian", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> PL = new ModConfigurationKey<bool>("PL", "Polish", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> PT = new ModConfigurationKey<bool>("PT", "Portuguese", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> RU = new ModConfigurationKey<bool>("RU", "Russian", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> SV = new ModConfigurationKey<bool>("SV", "Swedish", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> ZH = new ModConfigurationKey<bool>("ZH", "Chinese", () => false);
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY7 = new ModConfigurationKey<dummy>("DUMMY_7", $"<color={HEADER_TEXT_COLOR}>[ Custom Badges ]</color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv of urls: \"url1,url2,url3\" resdb or http)", () => "",false ,checkNull);
 
@@ -379,6 +429,98 @@ namespace FasterBadges
                 case "Transgender":
                     changedvar = Transgender;
                     url = new Uri("resdb:///94c9fd36191472b0473dd6f4dbad2de0baeab0b6d83b72ca2285f0cd36e8cd4c.webp");
+                    break;
+                case "AF":
+                    changedvar = AF;
+                    url = new Uri("resdb:///f9f1c2142d6cce45f38729480a3a457f70774f48fcb915cf9e7db59f9dee5d54.png");
+                    break;
+                case "AR":
+                    changedvar = AR;
+                    url = new Uri("resdb:///f110617fe3fc8fc26372ef0ee88f469a4d02186ab1cc42b51fda1261d8ae03b2.png");
+                    break;
+                case "BN":
+                    changedvar = BN;
+                    url = new Uri("resdb:///8f1d00595cd2722cda4bfb14eaf632033cf914d9af9709a321c66a8b04312d84.png");
+                    break;
+                case "DA":
+                    changedvar = DA;
+                    url = new Uri("resdb:///0f4497240ebac60bf8553a08766a9657660387387da5d0db378316102ec23029.png");
+                    break;
+                case "DE":
+                    changedvar = DE;
+                    url = new Uri("resdb:///9f8a177ae178a8ac426b97ea0e58ede1143ca32ef3a2a05aef1e2f14e7bd7080.png");
+                    break;
+                case "EN":
+                    changedvar = EN;
+                    url = new Uri("resdb:///ec1225cb99da4205f5f37dcabd72bc0ae7ebc2b8e706a9817d236f8ef18a90bd.png");
+                    break;
+                case "ES":
+                    changedvar = ES;
+                    url = new Uri("resdb:///b241f3e7ed8bfc158bd2ba67fd91c33dd710e8ef504e844b41ccb9fc68d29520.png");
+                    break;
+                case "FI":
+                    changedvar = FI;
+                    url = new Uri("resdb:///b5ba76422dec60db608f68ad7d40af8583e3e59653889707410b0acaef729d4f.png");
+                    break;
+                case "FR":
+                    changedvar = FR;
+                    url = new Uri("resdb:///c6b29e2ec07370deca43067d3a928b8dd6a4b4d7a50f97106becae49869fb267.png");
+                    break;
+                case "HI":
+                    changedvar = HI;
+                    url = new Uri("resdb:///e91793ee1cdfa821ead79bb72eb4c00e5e1658fdcc35ac705f4c26d28496fdb6.png");
+                    break;
+                case "HU":
+                    changedvar = HU;
+                    url = new Uri("resdb:///0c4113b6ba52d09b1882a510d3634c38a9c88bb3d42caf7e3050b26c0a52ca5e.png");
+                    break;
+                case "IT":
+                    changedvar = IT;
+                    url = new Uri("resdb:///9e46fd023008e6e7cee2b2217ffe325c92604f72730eacbb63ca46b956cc73aa.png");
+                    break;
+                case "JA":
+                    changedvar = JA;
+                    url = new Uri("resdb:///e520e3d7c0ee42d353f79607614db651643294ea6af750fba9ac4a860b268268.png");
+                    break;
+                case "KO":
+                    changedvar = KO;
+                    url = new Uri("resdb:///0c5d8c10070c89b26aabdb2c15e9976de4658ce8cdac9187c9becb029af3bcd1.png");
+                    break;
+                case "LT":
+                    changedvar = LT;
+                    url = new Uri("resdb:///c49ba42d38d6e9e210acd44fd8be07428ab84bf42374ec533cbc4eeaf262d20c.png");
+                    break;
+                case "MR":
+                    changedvar = MR;
+                    url = new Uri("resdb:///8f78afb4be2944336aa7dc2a066576d12df72a4c8929af9ca46187cc7464d446.png");
+                    break;
+                case "NL":
+                    changedvar = NL;
+                    url = new Uri("resdb:///3a4b56f165aad42de75432680fae47dd06dd2a35d79d249498e828c21f0a9293.png");
+                    break;
+                case "NO":
+                    changedvar = NO;
+                    url = new Uri("resdb:///ef322f0e9dd3352809739c280e70ae65ae342332a93c65586f770f94814f418c.png");
+                    break;
+                case "PL":
+                    changedvar = PL;
+                    url = new Uri("resdb:///f6f37a9a7823e1fc4057a9673f244b68ca36455c45cb5433d9a8d64cb75a3db7.png");
+                    break;
+                case "PT":
+                    changedvar = PT;
+                    url = new Uri("resdb:///56ec0c6846bf0484615ddf8b4fe1e38038255b71b8e9e17270a1b7a590cac868.png");
+                    break;
+                case "RU":
+                    changedvar = RU;
+                    url = new Uri("resdb:///0ee18103333617e52e4b5607a1631c5655c38a3a9f632737bf0ac2d52842fabd.png");
+                    break;
+                case "SV":
+                    changedvar = SV;
+                    url = new Uri("resdb:///d7dd94e50e366757491fd2f695f5fb45061925e6ac59636a957b3a85c7ead6f5.png");
+                    break;
+                case "ZH":
+                    changedvar = ZH;
+                    url = new Uri("resdb:///5a59c0ac93743f931e93b3889736fd776a2122744bf4dbed3a8b343f04f2974b.png");
                     break;
                 default:
                     break;
