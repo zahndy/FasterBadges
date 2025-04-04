@@ -2,39 +2,13 @@
 using ResoniteModLoader;
 using FrooxEngine;
 using Elements.Core;
-using SkyFrost.Base;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using FrooxEngine.CommonAvatar;
-using System.Runtime.CompilerServices;
-using static FrooxEngine.AppEnder;
-using static OfficialAssets.Graphics;
-using static FrooxEngine.FullBodyCalibratorDialog;
 
 namespace FasterBadges
 {
-    public class BadgeConfiguration
-    {
-        public string Name { get; set; }
-        public string DisplayName { get; set; }
-        public Uri ResourceUrl { get; set; }
-        public BadgeCategory Category { get; set; }
-        public ModConfigurationKey<bool> ConfigKey { get; set; }
-    }
-
-    public enum BadgeCategory
-    {
-        Age,
-        Various,
-        HeartPride,
-        DiamondIdentity,
-        Language,
-        Custom
-    }
-
     public class BadgeResourceManager
     {
         private readonly Dictionary<string, (Uri url, ModConfigurationKey<bool> config)> _resourceMap;
@@ -66,6 +40,13 @@ namespace FasterBadges
         private readonly colorX? _tint;
         private readonly int? _maxSize;
 
+        public HashSet<AvatarManager> avatars
+        {
+            get
+            {
+                return _avatars;
+            }
+        }
         public AvatarBadgeHandler(BlendMode? blendMode, colorX? tint, int? maxSize)
         {
             _avatars = new HashSet<AvatarManager>();
@@ -73,14 +54,14 @@ namespace FasterBadges
             _tint = tint;
             _maxSize = maxSize;
         }
-
+        public int AvatarCount() {  return _avatars.Count; }
         public void AddAvatar(AvatarManager avatar)
         {
-            if (!_avatars.Contains(avatar))
-            {
+           // if (!_avatars.Contains(avatar))
+            //{
                 avatar.Disposing += (field) => { _avatars.Remove(avatar); };
                 _avatars.Add(avatar);
-            }
+           // }
         }
         public IEnumerable<AvatarManager> GetAvatars()
         {
@@ -154,7 +135,6 @@ namespace FasterBadges
         private const string HEADER_TEXT_COLOR = "#BA64F2";
         private static Predicate<string> checkNull = delegate (string str) { return (str != null); };
 
-        // Keep all existing ModConfigurationKey definitions as they are...
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> ENABLED = new ModConfigurationKey<bool>("enabled", "Enabled", () => true);
         [AutoRegisterConfigKey]
@@ -163,7 +143,7 @@ namespace FasterBadges
         private static readonly ModConfigurationKey<dummy> DUMMY1 = new ModConfigurationKey<dummy>("dummy1Line", $"<color={HEADER_TEXT_COLOR}>---------------------------------------------------------------------------------------------------------------------------------</color>");
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY2 = new ModConfigurationKey<dummy>("DUMMY_2", $"<color={HEADER_TEXT_COLOR}>[ Age Related ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY2 = new ModConfigurationKey<dummy>("DUMMY_2", $"<align=center><color={HEADER_TEXT_COLOR}>[ Age Related ]</color></align> ", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Under18 = new ModConfigurationKey<bool>("Under18", "Under 18", () => false);
@@ -179,7 +159,9 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Fossil = new ModConfigurationKey<bool>("Fossil", "Fossil", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY3 = new ModConfigurationKey<dummy>("DUMMY_3", $"<color={HEADER_TEXT_COLOR}>[ Various ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY17 = new ModConfigurationKey<dummy>("DUMMY_17", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY3 = new ModConfigurationKey<dummy>("DUMMY_3", $"<align=center><color={HEADER_TEXT_COLOR}>[ Various ]</color></align> ", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Avali = new ModConfigurationKey<bool>("Avali", "Avali", () => false);
@@ -197,7 +179,9 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> USFN = new ModConfigurationKey<bool>("USFN", "USFN", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY4 = new ModConfigurationKey<dummy>("DUMMY_4", $"<color={HEADER_TEXT_COLOR}>[ Heart Pride ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY18 = new ModConfigurationKey<dummy>("DUMMY_18", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY4 = new ModConfigurationKey<dummy>("DUMMY_4", $"<align=center><color={HEADER_TEXT_COLOR}>[ Heart Pride ]</color></align> ", () => new dummy());
 
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Abrosexual = new ModConfigurationKey<bool>("Abrosexual", "Abrosexual", () => false);
@@ -209,6 +193,9 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Androsexual = new ModConfigurationKey<bool>("Androsexual", "Androsexual", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Asexual = new ModConfigurationKey<bool>("Asexual", "Asexual", () => false);
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY5 = new ModConfigurationKey<dummy>("DUMMY_5", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Autosexual = new ModConfigurationKey<bool>("Autosexual", "Autosexual", () => false);
         [AutoRegisterConfigKey]
@@ -219,6 +206,9 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Demisexual = new ModConfigurationKey<bool>("Demisexual", "Demisexual", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Fraysexual = new ModConfigurationKey<bool>("Fraysexual", "Fraysexual", () => false);
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY6 = new ModConfigurationKey<dummy>("DUMMY_6", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> GayGilbert = new ModConfigurationKey<bool>("GayGilbert", "Gay (Gilbert)", () => false);
         [AutoRegisterConfigKey]
@@ -229,6 +219,9 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Gay = new ModConfigurationKey<bool>("Gay", "Gay", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Graysexual = new ModConfigurationKey<bool>("Graysexual", "Graysexual", () => false);
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY7 = new ModConfigurationKey<dummy>("DUMMY_7", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Gynesexual = new ModConfigurationKey<bool>("Gynesexual", "Gynesexual", () => false);
         [AutoRegisterConfigKey]
@@ -239,6 +232,9 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Lesbian = new ModConfigurationKey<bool>("Lesbian", "Lesbian", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Omnisexual = new ModConfigurationKey<bool>("Omnisexual", "Omnisexual", () => false);
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY8 = new ModConfigurationKey<dummy>("DUMMY_8", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Pansexual = new ModConfigurationKey<bool>("Pansexual", "Pansexual", () => false);
         [AutoRegisterConfigKey]
@@ -249,7 +245,9 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Queer = new ModConfigurationKey<bool>("Queer", "Queer", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY5 = new ModConfigurationKey<dummy>("DUMMY_5", $"<color={HEADER_TEXT_COLOR}>[ Diamond Identity ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY19 = new ModConfigurationKey<dummy>("DUMMY_19", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY9 = new ModConfigurationKey<dummy>("DUMMY_9", $"<align=center><color={HEADER_TEXT_COLOR}>[ Diamond Identity ]</color></align> ", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Agender = new ModConfigurationKey<bool>("Agender", "Agender", () => false);
         [AutoRegisterConfigKey]
@@ -260,6 +258,9 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Genderfluid = new ModConfigurationKey<bool>("Genderfluid", "Genderfluid", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Genderqueer = new ModConfigurationKey<bool>("Genderqueer", "Genderqueer", () => false);
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY10 = new ModConfigurationKey<dummy>("DUMMY_10", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Intersex = new ModConfigurationKey<bool>("Intersex", "Intersex", () => false);
         [AutoRegisterConfigKey]
@@ -272,7 +273,9 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> Transgender = new ModConfigurationKey<bool>("Transgender", "Transgender", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY6 = new ModConfigurationKey<dummy>("DUMMY_6", $"<color={HEADER_TEXT_COLOR}>[ Languages ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY20 = new ModConfigurationKey<dummy>("DUMMY_29", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY11 = new ModConfigurationKey<dummy>("DUMMY_11", $"<align=center><color={HEADER_TEXT_COLOR}>[ Languages ]</color></align> ", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> AF = new ModConfigurationKey<bool>("AF", "Afrikaans", () => false);
         [AutoRegisterConfigKey]
@@ -280,17 +283,25 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> BN = new ModConfigurationKey<bool>("BN", "Bengali", () => false);
         [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> ZH = new ModConfigurationKey<bool>("ZH", "Chinese", () => false);
+        [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> DA = new ModConfigurationKey<bool>("DA", "Danish", () => false);
+
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> DE = new ModConfigurationKey<bool>("DE", "German", () => false);
+        private static readonly ModConfigurationKey<dummy> DUMMY12 = new ModConfigurationKey<dummy>("DUMMY_12", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> EN = new ModConfigurationKey<bool>("EN", "English", () => false);
+        private static ModConfigurationKey<bool> NL = new ModConfigurationKey<bool>("NL", "Dutch", () => false);
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> ES = new ModConfigurationKey<bool>("ES", "Spanish", () => false);
+        private static ModConfigurationKey<bool> EN = new ModConfigurationKey<bool>("EN", "English", () => false);    
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> FI = new ModConfigurationKey<bool>("FI", "Finnish", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> FR = new ModConfigurationKey<bool>("FR", "French", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> DE = new ModConfigurationKey<bool>("DE", "German", () => false);
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY13 = new ModConfigurationKey<dummy>("DUMMY_13", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> HI = new ModConfigurationKey<bool>("HI", "Hindi", () => false);
         [AutoRegisterConfigKey]
@@ -301,29 +312,38 @@ namespace FasterBadges
         private static ModConfigurationKey<bool> JA = new ModConfigurationKey<bool>("JA", "Japanese", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> KO = new ModConfigurationKey<bool>("KO", "Korean", () => false);
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY14 = new ModConfigurationKey<dummy>("DUMMY_14", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> LT = new ModConfigurationKey<bool>("LT", "Lithuanian", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> MR = new ModConfigurationKey<bool>("MR", "Marathi", () => false);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> NL = new ModConfigurationKey<bool>("NL", "Dutch", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> NO = new ModConfigurationKey<bool>("NO", "Norwegian", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> PL = new ModConfigurationKey<bool>("PL", "Polish", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> PT = new ModConfigurationKey<bool>("PT", "Portuguese", () => false);
+
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY15 = new ModConfigurationKey<dummy>("DUMMY_15", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> RU = new ModConfigurationKey<bool>("RU", "Russian", () => false);
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> SV = new ModConfigurationKey<bool>("SV", "Swedish", () => false);
+        private static ModConfigurationKey<bool> ES = new ModConfigurationKey<bool>("ES", "Spanish", () => false);
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> ZH = new ModConfigurationKey<bool>("ZH", "Chinese", () => false);
+        private static ModConfigurationKey<bool> SV = new ModConfigurationKey<bool>("SV", "Swedish", () => false);
+        
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY7 = new ModConfigurationKey<dummy>("DUMMY_7", $"<color={HEADER_TEXT_COLOR}>[ Custom Badges ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY21 = new ModConfigurationKey<dummy>("DUMMY_21", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY16 = new ModConfigurationKey<dummy>("DUMMY_16", $"<align=center><color={HEADER_TEXT_COLOR}>[ Custom Badges ]</color></align> ", () => new dummy());
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv of urls: \"url1,url2,url3\" resdb or http)", () => "", false, checkNull);
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY22 = new ModConfigurationKey<dummy>("DUMMY_22", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
 
         private static BlendMode? blendMode = new BlendMode?();
         private static colorX? tint = new colorX?();
@@ -722,19 +742,14 @@ namespace FasterBadges
 
             private static void HandleAvatarAttachment(AvatarManager avatarManager)
             {
-                Msg(" triggered avatarManager Slot: " + avatarManager.Slot.Name);
-                Msg(" avatarManager ActiveUser: " + avatarManager.Slot.ActiveUser.ToString());
-
                 avatarManager.RunSynchronously(() =>
                 {
-                    // Add to avatar handler
-                    _avatarHandler.AddAvatar(avatarManager);
-
-                    Msg(" --- Adding Custom Badges --- ");
-                    Msg(" Current avatarManagers: " + _avatarHandler.GetAvatars().ToArray().ToString());
-
-                    RefreshCustomBadgesForAvatar(avatarManager);
-                    RefreshAllBadgesForAvatar(avatarManager);
+                    if (!_avatarHandler.avatars.Contains(avatarManager)) 
+                    { 
+                        _avatarHandler.AddAvatar(avatarManager);
+                        RefreshCustomBadgesForAvatar(avatarManager);
+                        RefreshAllBadgesForAvatar(avatarManager);
+                    }
                 });
             }
         }
