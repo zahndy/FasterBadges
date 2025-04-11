@@ -128,7 +128,7 @@ namespace FasterBadges
         public override String Name => "FasterBadges";
         public override String Author => "zahndy";
         public override String Link => "https://github.com/zahndy/FasterBadges";
-        public override String Version => "1.2.0";
+        public override String Version => "1.3.0";
 
         private static readonly BadgeResourceManager _resourceManager = new BadgeResourceManager();
         private static readonly AvatarBadgeHandler _avatarHandler = new AvatarBadgeHandler(blendMode, tint, maxSize);
