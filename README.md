@@ -6,7 +6,7 @@ badges string is formatted as a comma separated list of resdb: strings.<br>
 For example:
 resdb:///515d6210069e5e0a498894d93735ab14fbd68a183a47c1d71a96caa3aba1a786.webp,resdb:///0e33a4809f27cfd1004e9a622efa615c0adec1ba2efb381c0d14db866c3042a5.webp<br>
 <br>
-this mod exists because AxisAligners on nametags or badge-injectors are currently Inefficient/Heavy. And I assumed a lot of people usesd AxisAligners but after some debugging its actually not that many. So this mod is mostly just for managing badges.<br>
+this mod exists because AxisAligners on nametags or badge-injectors are currently Inefficient/Heavy. <br> And I assumed a lot of people usesd AxisAligners but after some debugging its actually not that many. <br> So this mod is mostly just for managing badges.<br> <br>
 Contains a variety of badges that you can toggle in the ResoniteModSettings. <br>
 Currently allowes removal of Supporter, Host or All non-mod badges.
 <br>
