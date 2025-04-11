@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FrooxEngine.CommonAvatar;
+using static FrooxEngine.MazeWallData;
 
 namespace FasterBadges
 {
@@ -70,11 +71,27 @@ namespace FasterBadges
 
         public void UpdateBadges(string badgeName, Uri url, ModConfigurationKey<bool> config)
         {
-            bool keyEnabled = Patch.Config.GetValue(config);
+            bool keyEnabled = Patch.Config.GetValue(config);     
             foreach (AvatarManager av in _avatars)
             {
                 av.Slot.RunSynchronously(delegate
                 {
+                    if (Patch.Config.GetValue(Patch.DALL))
+                    {
+                        av.BadgeTemplates.DestroyChildren();
+                    }
+                    else
+                    {
+                        if (Patch.Config.GetValue(Patch.HOST))
+                        {
+                            av.BadgeTemplates.FindChild("Host", true, true).Destroy();
+                        }
+                        if (Patch.Config.GetValue(Patch.SUPP))
+                        {
+                            av.BadgeTemplates.FindChild("Supporter", true, true).Destroy();
+                        }
+                    }
+
                     HashSet<string> hashSet = Pool.BorrowHashSet<string>();
                     foreach (Slot child in av.BadgeTemplates.Children)
                     {
@@ -344,6 +361,14 @@ namespace FasterBadges
         private static ModConfigurationKey<string> CustomBadges = new ModConfigurationKey<string>("CustomBadges", "List of custom badges(csv of urls: \"url1,url2,url3\" resdb or http)", () => "", false, checkNull);
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY22 = new ModConfigurationKey<dummy>("DUMMY_22", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY23 = new ModConfigurationKey<dummy>("DUMMY_23", $"<align=center><color={HEADER_TEXT_COLOR}>[ Remove Default Badges (If present) ]</color>", () => new dummy());
+        [AutoRegisterConfigKey]
+        public static ModConfigurationKey<bool> HOST = new ModConfigurationKey<bool>("HOST", "Host", () => false);
+        [AutoRegisterConfigKey]
+        public static ModConfigurationKey<bool> SUPP = new ModConfigurationKey<bool>("SUPP", "Supporter", () => false);
+        [AutoRegisterConfigKey]
+        public static ModConfigurationKey<bool> DALL = new ModConfigurationKey<bool>("DALL", "Disable ALL", () => false);
 
         private static BlendMode? blendMode = new BlendMode?();
         private static colorX? tint = new colorX?();
@@ -689,25 +714,23 @@ namespace FasterBadges
                 if (customBadge.Length > 10)
                 {
                     Uri lurl = new Uri(customBadge);
-                    avatarManager.AddIconBadge(lurl,
-                        "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5),
+                    avatarManager.AddIconBadge(lurl, "Extra Badge-" + customBadge.Substring(customBadge.Length - 10, 5),
                         blendMode, tint, TextureFilterMode.Bilinear, maxSize);
                 }
             }
         }
 
         private static void RefreshAllBadgesForAvatar(AvatarManager avatarManager)
-        {
+        {  
             foreach (string badge in BadgesListNames)
-            {
+            {      
                 var badgeData = _resourceManager.GetBadgeData(badge);
                 if (!badgeData.skip && badgeData.url != null)
                 {
                     bool keyEnabled = Config.GetValue(badgeData.config);
                     if (keyEnabled)
                     {
-                        String badgeNameId = "Extra Custom Badge-" +
-                            badgeData.url.ToString().Substring(badgeData.url.ToString().Length - 10, 5);
+                        String badgeNameId = "Extra Custom Badge-" + badgeData.url.ToString().Substring(badgeData.url.ToString().Length - 10, 5);
                         avatarManager.AddIconBadge(badgeData.url, badgeNameId,
                             blendMode, tint, TextureFilterMode.Bilinear, maxSize);
                     }
@@ -747,6 +770,23 @@ namespace FasterBadges
                     if (!_avatarHandler.avatars.Contains(avatarManager)) 
                     { 
                         _avatarHandler.AddAvatar(avatarManager);
+
+                        if (Config.GetValue(DALL))
+                        {
+                            avatarManager.BadgeTemplates.DestroyChildren();
+                        }
+                        else
+                        {
+                            if (Config.GetValue(HOST))
+                            {
+                                avatarManager.BadgeTemplates.FindChild("Host", true, true).Destroy();
+                            }
+                            if (Config.GetValue(SUPP))
+                            {
+                                avatarManager.BadgeTemplates.FindChild("Supporter", true, true).Destroy();
+                            }
+                        }
+
                         RefreshCustomBadgesForAvatar(avatarManager);
                         RefreshAllBadgesForAvatar(avatarManager);
                     }
