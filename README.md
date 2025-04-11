@@ -6,10 +6,10 @@ badges string is formatted as a comma separated list of resdb: strings.<br>
 For example:
 resdb:///515d6210069e5e0a498894d93735ab14fbd68a183a47c1d71a96caa3aba1a786.webp,resdb:///0e33a4809f27cfd1004e9a622efa615c0adec1ba2efb381c0d14db866c3042a5.webp<br>
 <br>
-this mod exists because AxisAligner is currently Inefficient/Heavy.<br>
-When people want to add custom badges they get directed to or are handed nametags or badge-injectors that contain multiple AxisAligners.<br>
-My alternative is creating some protoflux to deal with the positioning of the badges but it feels like a bad workaround for a issue that shouldnt exist in the first place.<br>
-To solve this we can just inject our badges into the badge templates and let the AvatarBadgeManager deal with aligning them. But this has to be done before the component on the avatar initializes, Thus the creation this mod.<br>
+this mod was crated because AxisAligners on nametags or badge-injectors are currently Inefficient/Heavy. <br> And I assumed a lot of people used AxisAligners but after some debugging its actually not that many. <br> So this mod is mostly just for managing badges.<br> <br>
+Contains a variety of badges that you can toggle in the ResoniteModSettings. <br>
+Currently allowes removal of Supporter, Host or All non-mod badges.
+<br>
 
 ## Installation
 1. Install [ResoniteModLoader](https://github.com/resonite-modding-group/ResoniteModLoader).
