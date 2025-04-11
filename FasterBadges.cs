@@ -804,7 +804,9 @@ namespace FasterBadges
             {
                 if (manager == null || !Config.GetValue(ENABLED)) return;
 
-              
+                User user = __instance.Slot.ActiveUser;
+                if (user?.UserName == null || !user.IsLocalUser) return;
+
                 if (manager.BadgeTemplates == null) return;
 
                 if (Config.GetValue(DALL))
