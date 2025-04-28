@@ -882,24 +882,27 @@ namespace FasterBadges
                 if (manager.BadgeTemplates == null) return;
 
                 if (Config.GetValue(DALL))
-                    {
-                    manager.Slot.RunSynchronously(() =>
-                    {
+                    {     
                         foreach (Slot badge in manager.BadgeTemplates.Children)
                         {
-                            if (badge != null && !badge.Name.Contains("Extra "))
+                            manager.Slot.RunSynchronously(() =>
                             {
-                                badge.Destroy();
-                            }
+                                if (badge != null && !badge.Name.Contains("Extra "))
+                                {
+                                    badge.Destroy();
+                                }
+                            });
                         }
                         foreach (Slot badge in __instance.Slot.FindChild("Badges", true, true, 3).Children)
                         {
-                            if (badge != null && !badge.Name.Contains("Extra "))
+                            manager.Slot.RunSynchronously(() =>
                             {
-                                badge.Destroy();
-                            }
+                                if (badge != null && !badge.Name.Contains("Extra "))
+                                {
+                                    badge.Destroy();
+                                }
+                            });
                         }
-                    });
                     }
                 if (Config.GetValue(HOST))
                 {
