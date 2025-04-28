@@ -73,7 +73,7 @@ namespace FasterBadges
             return _avatars;
         }
 
-        public void UpdateBadges(string badgeName, Uri url, ModConfiguration modConfiguration, ModConfigurationKey<bool> ckey)
+        public void UpdateBadge(string badgeName, Uri url, ModConfiguration modConfiguration, ModConfigurationKey<bool> ckey)
         {
             if (modConfiguration == null || ckey == null)
             {
@@ -107,6 +107,7 @@ namespace FasterBadges
                             }
                         }
                     }
+                    
                     av.UpdateBadges();
                 });
             }
@@ -149,7 +150,11 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> ENABLED = new ModConfigurationKey<bool>("enabled", "Enabled", () => true);
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY = new ModConfigurationKey<dummy>("dummy", "For Accessibility badges please see https://wiki.resonite.com/Resonite_Bot#Assignable_Badges");
+        private static readonly ModConfigurationKey<dummy> DUMMY_ = new ModConfigurationKey<dummy>("dummy_", "For Accessibility badges please see https://wiki.resonite.com/Resonite_Bot#Assignable_Badges");
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY = new ModConfigurationKey<dummy>("dummy", "Dynamically adding and removing badges is difficult due to the AvatarBadgeManager animating the badges,");
+        [AutoRegisterConfigKey]
+        private static readonly ModConfigurationKey<dummy> DUMMY0 = new ModConfigurationKey<dummy>("dummy0", "So you may end up with overlapping ones until you respawn.");
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY1 = new ModConfigurationKey<dummy>("dummy1Line", $"<color={HEADER_TEXT_COLOR}>---------------------------------------------------------------------------------------------------------------------------------</color>");
 
@@ -698,7 +703,7 @@ namespace FasterBadges
             Userspace.Current.RunSynchronously(() =>
             {
                 var badgeData = _resourceManager.GetBadgeData(badgeName);
-            _avatarHandler.UpdateBadges(badgeName, badgeData.url, Config, badgeData.configKey);
+            _avatarHandler.UpdateBadge(badgeName, badgeData.url, Config, badgeData.configKey);
             });
         }
 
@@ -707,7 +712,7 @@ namespace FasterBadges
                 foreach (string badge in BadgesListNames)
                 {
                     var badgeData = _resourceManager.GetBadgeData(badge);
-                    _avatarHandler.UpdateBadges(badge, badgeData.url, Config, badgeData.configKey);
+                    _avatarHandler.UpdateBadge(badge, badgeData.url, Config, badgeData.configKey);
                 }
         }
 
@@ -938,6 +943,7 @@ namespace FasterBadges
                 }
                
             }
+
         }
     }
 }
