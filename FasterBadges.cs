@@ -84,7 +84,9 @@ namespace FasterBadges
             {
                 av.Slot.RunSynchronously(() =>
                 {
-                    if (!(ckey == Patch.DALL || ckey == Patch.SUPP))
+                    bool badgesChanged = false;
+
+                    if (!(ckey == Patch.DALL || ckey == Patch.SUPP || ckey == Patch.HOST))
                     { 
                         HashSet<string> hashSet = Pool.BorrowHashSet<string>();
                         foreach (Slot child in av.BadgeTemplates.Children)
@@ -97,6 +99,7 @@ namespace FasterBadges
                             if (keyEnabled)
                             {
                                 av.AddIconBadge(url, badgeNameId, _blendMode, _tint, TextureFilterMode.Bilinear, _maxSize);
+                                badgesChanged = true;
                             }
                         }
                         else
@@ -104,13 +107,70 @@ namespace FasterBadges
                             if (!keyEnabled)
                             {
                                 av.BadgeTemplates.FindChild(badgeNameId, true, true, 1).Destroy();
+                                badgesChanged = true;
                             }
                         }
                     }
-                    
-                    av.UpdateBadges();
+                    if (badgesChanged)
+                    {
+                        // Let the badge system process the changes first
+                        av.UpdateBadges();
+
+                        // Then reflow to ensure correct positioning
+                        av.World.RunInUpdates(2, () =>
+                        {
+                            ReflowBadges(av);
+                        });
+                    }
                 });
             }
+        }
+        public void ReflowBadges(AvatarManager av)
+        {
+            av.Slot.RunSynchronously(delegate
+            {
+                var badgeManager = av.Slot.GetComponentInChildren<AvatarBadgeManager>();
+                var badgeRoot = badgeManager?.Slot.FindChild("Badges");
+                if (badgeRoot == null) return;
+
+                var badges = badgeRoot.Children
+                    .Where(x => x != null && !x.IsRemoved)  // Only include valid badges
+                    .ToList();
+
+                if (!badges.Any()) return;
+
+                int maxRow = MathX.Max(12, 1);
+                float badgeSize = 0.05f;        // AvatarBadgeManager default
+                float separation = 0.005f;     
+
+                float totalWidth = maxRow * badgeSize + (maxRow - 1) * separation;
+
+                // Calculate starting X position to center the badges
+                //float xOffset = (totalWidth * -0.5f) + (badgeSize * 0.5f);
+
+                for (int i = 0; i < badges.Count; i++)
+                {
+                    int col = i % maxRow;
+                    int row = i / maxRow;
+
+                    //  badges[i].LocalPosition = new float3(
+                    //     xOffset + (col * (badgeSize + separation)),
+                    //     row * (badgeSize + separation),
+                    //     0f
+                    // );
+                    badges[i].LocalPosition = new float3(
+                         col * (badgeSize + separation),  // Just use positive positioning
+                         row * (badgeSize + separation),
+                         0f
+                     );
+
+                    badges[i].LocalScale = float3.One * badgeSize;
+                    badges[i].LocalRotation = floatQ.Identity;
+                }
+
+                // Ensure changes are applied
+                av.UpdateBadges();
+            });
         }
         public void CleanBadges()
         {
@@ -121,8 +181,11 @@ namespace FasterBadges
                 {
                     av.Slot.RunSynchronously(() =>
                     {
-                        var badgeTemplates = av.BadgeTemplates.Children.Where(child => child.Name.StartsWith("Extra ")).ToList();
-                        foreach (var badge in badgeTemplates)
+                        var badgesToRemove = av.BadgeTemplates.Children
+                            .Where(child => child.Name.StartsWith("Extra "))
+                            .ToList();
+
+                        foreach (var badge in badgesToRemove)
                         {
                             badge.Destroy();
                         }
@@ -131,6 +194,7 @@ namespace FasterBadges
                 }
             }
         }
+    
     }
     public class Patch : ResoniteMod
     {
@@ -150,11 +214,11 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> ENABLED = new ModConfigurationKey<bool>("enabled", "Enabled", () => true);
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY_ = new ModConfigurationKey<dummy>("dummy_", "For Accessibility badges please see https://wiki.resonite.com/Resonite_Bot#Assignable_Badges");
+        private static readonly ModConfigurationKey<dummy> DUMMY_ = new ModConfigurationKey<dummy>("dummy_", "<size=150>For Accessibility badges please see https://wiki.resonite.com/Resonite_Bot#Assignable_Badges</size> ");
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY = new ModConfigurationKey<dummy>("dummy", "Dynamically adding and removing badges is difficult due to the AvatarBadgeManager animating the badges,");
+        private static readonly ModConfigurationKey<dummy> DUMMY = new ModConfigurationKey<dummy>("dummy", $"<size=400>\nDynamically adding and removing badges is difficult due to the AvatarBadgeManager animating the badges.\nyou may end up with overlapping badges until you respawn.</size> ");
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY0 = new ModConfigurationKey<dummy>("dummy0", "So you may end up with overlapping ones until you respawn.");
+        private static readonly ModConfigurationKey<dummy> DUMMY0 = new ModConfigurationKey<dummy>("dummy0", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY1 = new ModConfigurationKey<dummy>("dummy1Line", $"<color={HEADER_TEXT_COLOR}>---------------------------------------------------------------------------------------------------------------------------------</color>");
 
@@ -361,7 +425,7 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY22 = new ModConfigurationKey<dummy>("DUMMY_22", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY23 = new ModConfigurationKey<dummy>("DUMMY_23", $"<align=center><color={HEADER_TEXT_COLOR}>[ Remove Default Badges (If present. Requires respawn to revert) ]</color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY23 = new ModConfigurationKey<dummy>("DUMMY_23", $"<align=center><color={HEADER_TEXT_COLOR}>[ Remove Default Badges if present. (Requires respawn to revert) ]</color>", () => new dummy());
         [AutoRegisterConfigKey]
         public static ModConfigurationKey<bool> HOST = new ModConfigurationKey<bool>("HOST", "Host", () => false);
         [AutoRegisterConfigKey]
@@ -625,6 +689,7 @@ namespace FasterBadges
                         bool value = (bool)Config.GetValue(configurationItemDefinition);
                         if (value)
                         {
+                            Msg("Adding badge: " + configurationItemDefinition.Name);
                             BadgesListNames.Add(configurationItemDefinition.Name);
                         }
                     }
@@ -634,6 +699,7 @@ namespace FasterBadges
 
         private void OnThisConfigurationChanged(ConfigurationChangedEvent configurationChangedEvent)
         {
+            Msg("Configuration Key Changed: " + configurationChangedEvent.Key.Name);
             if (configurationChangedEvent.Key == ENABLED)
             {
                 HandleEnabledStateChange();
@@ -642,25 +708,51 @@ namespace FasterBadges
             {
                 HandleCustomBadgesChange();
             }
+           else if (configurationChangedEvent.Key == HOST || configurationChangedEvent.Key == DALL || configurationChangedEvent.Key == SUPP)
+            {
+                HandleStockBadgesRemoval();
+            }
             else
             {
                 HandleIndividualBadgeChange(configurationChangedEvent.Key.Name);
             }
-            if (Config.GetValue(CustomBadges).Length < 10)
+
+            string customBadgesValue = Config.GetValue(CustomBadges);
+            if (string.IsNullOrEmpty(customBadgesValue) || customBadgesValue.Length < 10) //clear custom badges
             {
                 foreach (AvatarManager av in _avatarHandler.GetAvatars())
                 {
+                    if (av?.BadgeTemplates == null) continue; // Skip if avatar or badges are null
+
                     av.Slot.RunSynchronously(() =>
                     {
-                        foreach (Slot child in av.BadgeTemplates.Children)
+                        try
                         {
-                            Msg("Iterating over: " + child.Name);
-                            if (child.Name.Contains("Extra Custom Badge-"))
+                            var badgesToRemove = av.BadgeTemplates.Children.Any()
+                               ? av.BadgeTemplates.Children
+                                   .Where(child => child != null && child.Name.Contains("Extra Custom Badge-"))
+                                   .ToList()
+                               : new List<Slot>();
+
+                            // Remove the badges after collection
+                            foreach (var badge in badgesToRemove)
                             {
-                                Msg("Removing Custom Badge: " + child.Name + " From: " + av.Slot.ActiveUser.UserName);
-                                av.BadgeTemplates.FindChild(child.Name, true, true, 1).Destroy();
-                                av.Slot.RunInUpdates((3), () => { av.UpdateBadges(); });
+                                if (badge != null)
+                                {
+                                    Msg("Removing Custom Badge: " + badge.Name + " From: " +
+                                        (av.Slot.ActiveUser?.UserName ?? "Unknown User"));
+                                    badge.Destroy();
+                                }
                             }
+
+                            if (badgesToRemove.Any())
+                            {
+                                _avatarHandler.ReflowBadges(av);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Msg("Error cleaning custom badges: " + ex.Message);
                         }
                     });
                 }
@@ -672,13 +764,11 @@ namespace FasterBadges
         {
             if (Config.GetValue(ENABLED))
             {
-                Msg(" --- ENABLED --- ");
                 _avatarHandler.CleanBadges();
                 RefreshAllBadges();
             }
             else
             {
-                Msg(" --- DISABLED --- ");
                 _avatarHandler.CleanBadges();
             }
         }
@@ -689,10 +779,7 @@ namespace FasterBadges
             {
                Userspace.Current.RunSynchronously(() =>
                 {
-                  //  _avatarHandler.CleanBadges();
-                    // Userspace.Current.RunInUpdates((5),() =>{  });
                     RefreshCustomBadges();
-                    //    RefreshAllBadges();   
                 });
                 
             }
@@ -703,7 +790,9 @@ namespace FasterBadges
             Userspace.Current.RunSynchronously(() =>
             {
                 var badgeData = _resourceManager.GetBadgeData(badgeName);
-            _avatarHandler.UpdateBadge(badgeName, badgeData.url, Config, badgeData.configKey);
+                if (badgeData.url == null || badgeData.configKey == null) return;
+
+                _avatarHandler.UpdateBadge(badgeName, badgeData.url, Config, badgeData.configKey);
             });
         }
 
@@ -714,6 +803,66 @@ namespace FasterBadges
                     var badgeData = _resourceManager.GetBadgeData(badge);
                     _avatarHandler.UpdateBadge(badge, badgeData.url, Config, badgeData.configKey);
                 }
+        }
+
+        private static void HandleStockBadgesRemoval() 
+        {
+            if (Config.GetValue(HOST))
+            {
+                foreach (var av in _avatarHandler.GetAvatars())
+                {
+                    if (av?.BadgeTemplates == null) continue;
+
+                    av.Slot.RunSynchronously(() =>
+                    {
+                        var hostBadge = av.BadgeTemplates.FindChild("Host", true, true, 1);
+                        if (hostBadge != null)
+                        {
+                            Msg("Deletign Host Badge: " + hostBadge.Name + " From: " +
+                                (av.Slot.ActiveUser?.UserName ?? "Unknown User"));
+                            hostBadge.Destroy();
+                        }
+                        av.UpdateBadges();
+                    });
+                }
+            }
+            if (Config.GetValue(DALL))
+            {
+                foreach (var av in _avatarHandler.GetAvatars())
+                {
+                    av.Slot.RunSynchronously(() =>
+                    {
+                        var badgesToRemove = av.BadgeTemplates.Children
+                        .Where(badge => badge != null && !badge.Name.Contains("Extra "))
+                        .ToList();
+
+                        foreach (var badge in badgesToRemove)
+                        {
+                            badge.Destroy();
+                        }
+                        av.UpdateBadges();
+                    });
+                }
+            }
+            if (Config.GetValue(SUPP))
+            {
+                Msg("Attempting to delete Supporter Badge");
+                foreach (var av in _avatarHandler.GetAvatars())
+                {
+                    av.Slot.RunSynchronously(() =>
+                    {
+                        var suppBadgeTemplate = av.BadgeTemplates.FindChild("Supporter", true, true, 1);
+                        if (suppBadgeTemplate != null)
+                        {
+                            Msg("Deleting Supporter Badge: " + suppBadgeTemplate.Name + " From: " +
+                                (av.Slot.ActiveUser?.UserName ?? "Unknown User"));
+
+                            suppBadgeTemplate.Destroy();
+                        }
+                        av.UpdateBadges();
+                    });
+                }
+            }
         }
 
         private void RefreshCustomBadges()
@@ -727,22 +876,26 @@ namespace FasterBadges
                 {
                     av.Slot.RunSynchronously(() =>
                     {
+                        bool badgesChanged = false;
+
                         HashSet<string> hashSet = Pool.BorrowHashSet<string>();
-                        foreach (Slot child in av.BadgeTemplates.Children)
+
+                        var existingBadges = av.BadgeTemplates.Children
+                           .Where(child => child.Name.Contains("Extra Custom Badge-"))
+                           .ToList();
+
+                        foreach (var child in existingBadges)
                         {
-                            if (child.Name.Contains("Extra Custom Badge-"))
+                            if (customBadges.Contains(child.Name))
                             {
-                                var badge = av.BadgeTemplates.FindChild(child.Name, true, true,2);
-                                if (badge != null)
+                                if (customBadges.Contains(child.Name))
                                 {
-                                    if (customBadges.Contains(badge.Name))
-                                    {
-                                        hashSet.Add(badge.Name);
-                                    }
-                                    else
-                                    {
-                                        av.BadgeTemplates.FindChild(child.Name, true, true, 1).Destroy();
-                                    }
+                                    hashSet.Add(child.Name);
+                                }
+                                else
+                                {
+                                    child.Destroy();
+                                    badgesChanged = true;
                                 }
                             }
                         }
@@ -759,19 +912,30 @@ namespace FasterBadges
                                     av.AddIconBadge(badgeUrl,
                                         "Extra Custom Badge-" + customBadge.Substring(customBadge.Length - 10, 5),
                                         blendMode, tint, TextureFilterMode.Bilinear, maxSize);
+                                    badgesChanged = true;
                                     Msg("Added Custom Badge to: " + av.Slot.Name + " From: " + av.Slot.ActiveUser.UserName);
                                 }
                             }
 
                         }
-                        //av.UpdateBadges();
+                        if (badgesChanged)
+                        {
+                            // Let the badge system process first
+                            av.UpdateBadges();
+
+                            // Use RunInUpdates to delay reflow until after badge processing
+                            av.World.RunInUpdates(2, () =>
+                            {
+                                _avatarHandler.ReflowBadges(av);
+                            });
+                        }
                     });
                 }
             }
             
             
         }
-        private static void RefreshCustomBadgesForAvatar(AvatarManager avatarManager)
+        private static void InitCustomBadgesForAvatar(AvatarManager avatarManager)
         {
             if (String.IsNullOrEmpty(Config.GetValue(CustomBadges))) return;
 
@@ -789,7 +953,7 @@ namespace FasterBadges
             }
         }
 
-        private static void RefreshAllBadgesForAvatar(AvatarManager avatarManager)
+        private static void InitAllBadgesForAvatar(AvatarManager avatarManager)
         {
             foreach (string badge in BadgesListNames)
             {
@@ -807,6 +971,21 @@ namespace FasterBadges
                     
                 }
             }
+        }
+        private static void HandleAvatarAttachment(AvatarManager avatarManager)
+        {
+            avatarManager.Slot.RunSynchronously(() =>
+            {
+                if (!_avatarHandler.avatars.Contains(avatarManager))
+                {
+                    _avatarHandler.AddAvatar(avatarManager);
+
+                    HandleStockBadgesRemoval();
+
+                    InitCustomBadgesForAvatar(avatarManager);
+                    InitAllBadgesForAvatar(avatarManager);
+                }
+            });
         }
 
         [HarmonyPatch(typeof(AvatarBadgeManager))]
@@ -833,117 +1012,6 @@ namespace FasterBadges
 
                 HandleAvatarAttachment(avatarManager);
             }
-
-            private static void HandleAvatarAttachment(AvatarManager avatarManager)
-            {
-                avatarManager.Slot.RunSynchronously(() =>
-                {
-                    if (!_avatarHandler.avatars.Contains(avatarManager))
-                    {
-                        _avatarHandler.AddAvatar(avatarManager);
-
-                        if (Config.GetValue(DALL))
-                        {
-                            foreach (Slot badge in avatarManager.BadgeTemplates.Children)
-                            {
-                                if (badge != null && !badge.Name.Contains("Extra "))
-                                {
-                                    badge.Destroy();
-                                }
-                            }
-                        }
-                        else
-                        {
-
-                            if (Config.GetValue(SUPP))
-                            {
-                                var suppBadge = avatarManager.BadgeTemplates.FindChild("Supporter", true, true,2);
-                                if (suppBadge != null)
-                                {
-                                    suppBadge.Destroy();
-                                }
-                            }
-                        }
-
-                        RefreshCustomBadgesForAvatar(avatarManager);
-                        RefreshAllBadgesForAvatar(avatarManager);
-                    }
-                });
-            }
-        }
-
-        [HarmonyPatch(typeof(AvatarBadgeManager))]
-        class AvatarBadgeManager_UpdateBadges_Patch
-        {
-            [HarmonyPrefix]
-            [HarmonyPatch("UpdateBadges")]
-            static void Prefix(AvatarBadgeManager __instance, AvatarManager manager)
-            {
-                if (manager == null || !Config.GetValue(ENABLED)) return;
-
-                User user = __instance.Slot.ActiveUser;
-                if (user?.UserName == null || !user.IsLocalUser) return;
-
-                if (manager.BadgeTemplates == null) return;
-
-                if (Config.GetValue(DALL))
-                    {     
-                        foreach (Slot badge in manager.BadgeTemplates.Children)
-                        {
-                            manager.Slot.RunSynchronously(() =>
-                            {
-                                if (badge != null && !badge.Name.Contains("Extra "))
-                                {
-                                    badge.Destroy();
-                                }
-                            });
-                        }
-                        foreach (Slot badge in __instance.Slot.FindChild("Badges", true, true, 3).Children)
-                        {
-                            manager.Slot.RunSynchronously(() =>
-                            {
-                                if (badge != null && !badge.Name.Contains("Extra "))
-                                {
-                                    badge.Destroy();
-                                }
-                            });
-                        }
-                    }
-                if (Config.GetValue(HOST))
-                {
-                    manager.Slot.RunSynchronously(() =>
-                    {
-                        var hostBadge = manager.BadgeTemplates.FindChild("Host", true, true, 1);
-                        if (hostBadge != null)
-                        {
-                            hostBadge.Destroy();
-                        }
-                        hostBadge = __instance.Slot.FindChild("Host", true, true, 3);
-                        if (hostBadge != null)
-                        {
-                            hostBadge.Destroy();
-                        }
-                    });
-                }
-                if (Config.GetValue(SUPP))
-                {
-                    manager.Slot.RunSynchronously(() =>
-                    {
-                        var suppBadge = manager.BadgeTemplates.FindChild("Supporter", true, true ,1);
-                        if (suppBadge != null)
-                        {
-                            suppBadge.Destroy();
-                        }
-                        suppBadge = __instance.Slot.FindChild("Supporter", true, true, 3);
-                        if (suppBadge != null)
-                        {
-                            suppBadge.Destroy();
-                        }
-                    });
-                }
-               
-            }
-
-        }
+        }        
     }
 }
