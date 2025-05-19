@@ -113,64 +113,10 @@ namespace FasterBadges
                     }
                     if (badgesChanged)
                     {
-                        // Let the badge system process the changes first
                         av.UpdateBadges();
-
-                        // Then reflow to ensure correct positioning
-                        av.World.RunInUpdates(2, () =>
-                        {
-                            ReflowBadges(av);
-                        });
                     }
                 });
             }
-        }
-        public void ReflowBadges(AvatarManager av)
-        {
-            av.Slot.RunSynchronously(delegate
-            {
-                var badgeManager = av.Slot.GetComponentInChildren<AvatarBadgeManager>();
-                var badgeRoot = badgeManager?.Slot.FindChild("Badges");
-                if (badgeRoot == null) return;
-
-                var badges = badgeRoot.Children
-                    .Where(x => x != null && !x.IsRemoved)  // Only include valid badges
-                    .ToList();
-
-                if (!badges.Any()) return;
-
-                int maxRow = MathX.Max(12, 1);
-                float badgeSize = 0.05f;        // AvatarBadgeManager default
-                float separation = 0.005f;     
-
-                float totalWidth = maxRow * badgeSize + (maxRow - 1) * separation;
-
-                // Calculate starting X position to center the badges
-                //float xOffset = (totalWidth * -0.5f) + (badgeSize * 0.5f);
-
-                for (int i = 0; i < badges.Count; i++)
-                {
-                    int col = i % maxRow;
-                    int row = i / maxRow;
-
-                    //  badges[i].LocalPosition = new float3(
-                    //     xOffset + (col * (badgeSize + separation)),
-                    //     row * (badgeSize + separation),
-                    //     0f
-                    // );
-                    badges[i].LocalPosition = new float3(
-                         col * (badgeSize + separation),  // Just use positive positioning
-                         row * (badgeSize + separation),
-                         0f
-                     );
-
-                    badges[i].LocalScale = float3.One * badgeSize;
-                    badges[i].LocalRotation = floatQ.Identity;
-                }
-
-                // Ensure changes are applied
-                av.UpdateBadges();
-            });
         }
         public void CleanBadges()
         {
@@ -201,7 +147,7 @@ namespace FasterBadges
         public override String Name => "FasterBadges";
         public override String Author => "zahndy";
         public override String Link => "https://github.com/zahndy/FasterBadges";
-        public override String Version => "1.3.0";
+        public override String Version => "1.5.0";
 
         private static readonly BadgeResourceManager _resourceManager = new BadgeResourceManager();
         private static readonly AvatarBadgeHandler _avatarHandler = new AvatarBadgeHandler(blendMode, tint, maxSize);
@@ -744,11 +690,6 @@ namespace FasterBadges
                                     badge.Destroy();
                                 }
                             }
-
-                            if (badgesToRemove.Any())
-                            {
-                                _avatarHandler.ReflowBadges(av);
-                            }
                         }
                         catch (Exception ex)
                         {
@@ -920,14 +861,7 @@ namespace FasterBadges
                         }
                         if (badgesChanged)
                         {
-                            // Let the badge system process first
                             av.UpdateBadges();
-
-                            // Use RunInUpdates to delay reflow until after badge processing
-                            av.World.RunInUpdates(2, () =>
-                            {
-                                _avatarHandler.ReflowBadges(av);
-                            });
                         }
                     });
                 }
