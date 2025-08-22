@@ -1,13 +1,14 @@
-﻿using HarmonyLib;
-using ResoniteModLoader;
+﻿using Elements.Core;
 using FrooxEngine;
+using FrooxEngine.CommonAvatar;
+using HarmonyLib;
+using Renderite.Shared;
+using ResoniteModLoader;
 using SkyFrost.Base;
-using Elements.Core;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
-using FrooxEngine.CommonAvatar;
-using Renderite.Shared;
 
 namespace FasterBadges
 {
@@ -15,7 +16,7 @@ namespace FasterBadges
     {
         private readonly Dictionary<string, (Uri url, ModConfigurationKey<bool> configKey)> _resourceMap;
 
-        public Dictionary<string, (Uri url, ModConfigurationKey<bool> configKey)> badgesMap {  get { return _resourceMap; } }
+        public Dictionary<string, (Uri url, ModConfigurationKey<bool> configKey)> badgesMap { get { return _resourceMap; } }
         public BadgeResourceManager()
         {
             _resourceMap = new Dictionary<string, (Uri, ModConfigurationKey<bool>)>();
@@ -57,7 +58,7 @@ namespace FasterBadges
             _tint = tint;
             _maxSize = maxSize;
         }
-        public int AvatarCount() {  return _avatars.Count; }
+        public int AvatarCount() { return _avatars.Count; }
         public void AddAvatar(AvatarManager avatar)
         {
             User user = avatar.Slot.ActiveUser;
@@ -78,7 +79,7 @@ namespace FasterBadges
             {
                 return;
             }
-            bool keyEnabled = modConfiguration.GetValue(ckey);     
+            bool keyEnabled = modConfiguration.GetValue(ckey);
             foreach (AvatarManager av in _avatars)
             {
                 av.Slot.RunSynchronously(() =>
@@ -86,7 +87,7 @@ namespace FasterBadges
                     bool badgesChanged = false;
 
                     if (!(ckey == Patch.DALL || ckey == Patch.SUPP || ckey == Patch.HOST))
-                    { 
+                    {
                         HashSet<string> hashSet = Pool.BorrowHashSet<string>();
                         foreach (Slot child in av.BadgeTemplates.Children)
                         {
@@ -139,7 +140,7 @@ namespace FasterBadges
                 }
             }
         }
-    
+
     }
     public class Patch : ResoniteMod
     {
@@ -653,7 +654,7 @@ namespace FasterBadges
             {
                 HandleCustomBadgesChange();
             }
-           else if (configurationChangedEvent.Key == HOST || configurationChangedEvent.Key == DALL || configurationChangedEvent.Key == SUPP)
+            else if (configurationChangedEvent.Key == HOST || configurationChangedEvent.Key == DALL || configurationChangedEvent.Key == SUPP)
             {
                 HandleStockBadgesRemoval();
             }
@@ -717,11 +718,11 @@ namespace FasterBadges
         {
             if (!String.IsNullOrEmpty(Config.GetValue(CustomBadges)))
             {
-               Userspace.Current.RunSynchronously(() =>
+                Userspace.Current.RunSynchronously(() =>
                 {
                     RefreshCustomBadges();
                 });
-                
+
             }
         }
 
@@ -738,14 +739,14 @@ namespace FasterBadges
 
         private void RefreshAllBadges()
         {
-                foreach (string badge in BadgesListNames)
-                {
-                    var badgeData = _resourceManager.GetBadgeData(badge);
-                    _avatarHandler.UpdateBadge(badge, badgeData.url, Config, badgeData.configKey);
-                }
+            foreach (string badge in BadgesListNames)
+            {
+                var badgeData = _resourceManager.GetBadgeData(badge);
+                _avatarHandler.UpdateBadge(badge, badgeData.url, Config, badgeData.configKey);
+            }
         }
 
-        private static void HandleStockBadgesRemoval() 
+        private static void HandleStockBadgesRemoval()
         {
             if (Config.GetValue(HOST))
             {
@@ -865,8 +866,8 @@ namespace FasterBadges
                     });
                 }
             }
-            
-            
+
+
         }
         private static void InitCustomBadgesForAvatar(AvatarManager avatarManager)
         {
@@ -894,14 +895,14 @@ namespace FasterBadges
                 if (!badgeData.skip && badgeData.url != null)
                 {
                     bool keyEnabled = Config.GetValue(badgeData.configKey);
-                    
+
                     if (keyEnabled)
                     {
                         String badgeNameId = "Extra Badge-" + badgeData.url.ToString().Substring(badgeData.url.ToString().Length - 10, 5);
                         avatarManager.AddIconBadge(badgeData.url, badgeNameId,
                             blendMode, tint, TextureFilterMode.Bilinear, maxSize);
                     }
-                    
+
                 }
             }
         }
@@ -945,6 +946,6 @@ namespace FasterBadges
 
                 HandleAvatarAttachment(avatarManager);
             }
-        }        
+        }
     }
 }

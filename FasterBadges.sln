@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.8.34330.188
+VisualStudioVersion = 17.14.36414.22 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FasterBadges", "FasterBadges.csproj", "{9171A17C-D1AA-4937-9A53-3E56681DEC4A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FasterBadges", "FasterBadges.csproj", "{56B93A61-44FD-45D4-8DEE-FDB6B7407965}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9171A17C-D1AA-4937-9A53-3E56681DEC4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9171A17C-D1AA-4937-9A53-3E56681DEC4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9171A17C-D1AA-4937-9A53-3E56681DEC4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9171A17C-D1AA-4937-9A53-3E56681DEC4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56B93A61-44FD-45D4-8DEE-FDB6B7407965}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56B93A61-44FD-45D4-8DEE-FDB6B7407965}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56B93A61-44FD-45D4-8DEE-FDB6B7407965}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56B93A61-44FD-45D4-8DEE-FDB6B7407965}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {E97BCF8C-6BA3-4D2F-B5A5-D00CEB83415E}
+		SolutionGuid = {328C15DB-27C7-4024-89FC-22E492F6C10F}
 	EndGlobalSection
 EndGlobal
