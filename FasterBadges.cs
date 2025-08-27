@@ -27,7 +27,7 @@ namespace FasterBadges
             _resourceMap[name] = (url, configKey);
         }
 
-        public (Uri url, ModConfigurationKey<bool> configKey, bool skip) GetBadgeData(string name)
+        public (Uri? url, ModConfigurationKey<bool>? configKey, bool skip) GetBadgeData(string name)
         {
             if (_resourceMap.TryGetValue(name, out var data))
             {
@@ -389,7 +389,7 @@ namespace FasterBadges
 
         public override void OnEngineInit()
         {
-            Config = GetConfiguration();
+            Config = GetConfiguration()!;
             InitializeBadgeResources();
             Config.OnThisConfigurationChanged += OnThisConfigurationChanged;
             Config.Save(true);
@@ -663,7 +663,7 @@ namespace FasterBadges
                 HandleIndividualBadgeChange(configurationChangedEvent.Key.Name);
             }
 
-            string customBadgesValue = Config.GetValue(CustomBadges);
+            string customBadgesValue = Config.GetValue(CustomBadges)!;
             if (string.IsNullOrEmpty(customBadgesValue) || customBadgesValue.Length < 10) //clear custom badges
             {
                 foreach (AvatarManager av in _avatarHandler.GetAvatars())
@@ -742,7 +742,10 @@ namespace FasterBadges
             foreach (string badge in BadgesListNames)
             {
                 var badgeData = _resourceManager.GetBadgeData(badge);
-                _avatarHandler.UpdateBadge(badge, badgeData.url, Config, badgeData.configKey);
+                if (badgeData.url != null && badgeData.configKey != null)
+                {
+                    _avatarHandler.UpdateBadge(badge, badgeData.url, Config, badgeData.configKey);
+                }
             }
         }
 
@@ -808,7 +811,7 @@ namespace FasterBadges
 
         private void RefreshCustomBadges()
         {
-            string customBadgesStr = Config.GetValue(CustomBadges).Trim(',', ' ');
+            string customBadgesStr = Config.GetValue(CustomBadges)!.Trim(',', ' ');
             List<String> customBadges = customBadgesStr.Split(',').ToList();
 
             if (customBadgesStr.Length > 10)
@@ -873,7 +876,7 @@ namespace FasterBadges
         {
             if (String.IsNullOrEmpty(Config.GetValue(CustomBadges))) return;
 
-            String[] badges = Config.GetValue(CustomBadges).Trim(',').Split(',');
+            String[] badges = Config.GetValue(CustomBadges)!.Trim(',').Split(',');
             if (badges.Length == 0 || badges[0].Length < 10) return;
 
             foreach (String customBadge in badges)
@@ -892,7 +895,7 @@ namespace FasterBadges
             foreach (string badge in BadgesListNames)
             {
                 var badgeData = _resourceManager.GetBadgeData(badge);
-                if (!badgeData.skip && badgeData.url != null)
+                if (!badgeData.skip && badgeData.url != null && badgeData.configKey != null)
                 {
                     bool keyEnabled = Config.GetValue(badgeData.configKey);
 
