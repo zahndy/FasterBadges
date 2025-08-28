@@ -4,26 +4,29 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<AssemblyVersion>1.6.1.0</AssemblyVersion>
+    <FileVersion>1.6.1.0</FileVersion>
+    <Version>1.6.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Resonite\rml_libs\0Harmony.dll</HintPath>
+      <HintPath>..\..\..\..\..\Steam\SteamApps\common\Resonite\rml_libs\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Elements.Core">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Resonite\Elements.Core.dll</HintPath>
+      <HintPath>..\..\..\..\..\Steam\SteamApps\common\Resonite\Elements.Core.dll</HintPath>
     </Reference>
     <Reference Include="FrooxEngine">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Resonite\FrooxEngine.dll</HintPath>
+      <HintPath>..\..\..\..\..\Steam\SteamApps\common\Resonite\FrooxEngine.dll</HintPath>
     </Reference>
     <Reference Include="Renderite.Shared">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Resonite\Renderite.Shared.dll</HintPath>
+      <HintPath>..\..\..\..\..\Steam\SteamApps\common\Resonite\Renderite.Shared.dll</HintPath>
     </Reference>
     <Reference Include="ResoniteModLoader">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Resonite\Libraries\ResoniteModLoader.dll</HintPath>
+      <HintPath>..\..\..\..\..\Steam\SteamApps\common\Resonite\Libraries\ResoniteModLoader.dll</HintPath>
     </Reference>
     <Reference Include="SkyFrost.Base">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Resonite\SkyFrost.Base.dll</HintPath>
+      <HintPath>..\..\..\..\..\Steam\SteamApps\common\Resonite\SkyFrost.Base.dll</HintPath>
     </Reference>
   </ItemGroup>
 
