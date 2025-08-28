@@ -212,31 +212,19 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Abrosexual = new ModConfigurationKey<bool>("Abrosexual", "Abrosexual", () => false);
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Aegosexual = new ModConfigurationKey<bool>("Aegosexual", "Aegosexual", () => false);
-        [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Aliquasexual = new ModConfigurationKey<bool>("Aliquasexual", "Aliquasexual", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Androsexual = new ModConfigurationKey<bool>("Androsexual", "Androsexual", () => false);
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Asexual = new ModConfigurationKey<bool>("Asexual", "Asexual", () => false);
+        private static ModConfigurationKey<bool> Autosexual = new ModConfigurationKey<bool>("Autosexual", "Autosexual", () => false);
+        [AutoRegisterConfigKey]
+        private static ModConfigurationKey<bool> Ceterosexual = new ModConfigurationKey<bool>("Ceterosexual", "Ceterosexual", () => false);
 
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY5 = new ModConfigurationKey<dummy>("DUMMY_5", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Autosexual = new ModConfigurationKey<bool>("Autosexual", "Autosexual", () => false);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Bisexual = new ModConfigurationKey<bool>("Bisexual", "Bisexual", () => false);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Ceterosexual = new ModConfigurationKey<bool>("Ceterosexual", "Ceterosexual", () => false);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Demisexual = new ModConfigurationKey<bool>("Demisexual", "Demisexual", () => false);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Fraysexual = new ModConfigurationKey<bool>("Fraysexual", "Fraysexual", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY6 = new ModConfigurationKey<dummy>("DUMMY_6", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> GayGilbert = new ModConfigurationKey<bool>("GayGilbert", "Gay (Gilbert)", () => false);
+        private static ModConfigurationKey<bool> Fraysexual = new ModConfigurationKey<bool>("Fraysexual", "Fraysexual", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> GayMaleFull = new ModConfigurationKey<bool>("GayMaleFull", "Gay Male (Full)", () => false);
         [AutoRegisterConfigKey]
@@ -244,62 +232,33 @@ namespace FasterBadges
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Gay = new ModConfigurationKey<bool>("Gay", "Gay", () => false);
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Graysexual = new ModConfigurationKey<bool>("Graysexual", "Graysexual", () => false);
+        private static ModConfigurationKey<bool> Gynesexual = new ModConfigurationKey<bool>("Gynesexual", "Gynesexual", () => false);
 
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY7 = new ModConfigurationKey<dummy>("DUMMY_7", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Gynesexual = new ModConfigurationKey<bool>("Gynesexual", "Gynesexual", () => false);
+
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Iculasexual = new ModConfigurationKey<bool>("Iculasexual", "Iculasexual", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Kalossexual = new ModConfigurationKey<bool>("Kalossexual", "Kalossexual", () => false);
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Lesbian = new ModConfigurationKey<bool>("Lesbian", "Lesbian", () => false);
-        [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Omnisexual = new ModConfigurationKey<bool>("Omnisexual", "Omnisexual", () => false);
-
-        [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY8 = new ModConfigurationKey<dummy>("DUMMY_8", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Pansexual = new ModConfigurationKey<bool>("Pansexual", "Pansexual", () => false);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Polysexual = new ModConfigurationKey<bool>("Polysexual", "Polysexual", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Proligosexual = new ModConfigurationKey<bool>("Proligosexual", "Proligosexual", () => false);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Queer = new ModConfigurationKey<bool>("Queer", "Queer", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY19 = new ModConfigurationKey<dummy>("DUMMY_19", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY19 = new ModConfigurationKey<dummy>("DUMMY_19", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());     
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY9 = new ModConfigurationKey<dummy>("DUMMY_9", $"<align=center><color={HEADER_TEXT_COLOR}>[ Diamond Identity ]</color></align> ", () => new dummy());
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Agender = new ModConfigurationKey<bool>("Agender", "Agender", () => false);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Aromantic = new ModConfigurationKey<bool>("Aromantic", "Aromantic", () => false);
-        [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Demiromantic = new ModConfigurationKey<bool>("Demiromantic", "Demiromantic", () => false);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Genderfluid = new ModConfigurationKey<bool>("Genderfluid", "Genderfluid", () => false);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Genderqueer = new ModConfigurationKey<bool>("Genderqueer", "Genderqueer", () => false);
-
-        [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY10 = new ModConfigurationKey<dummy>("DUMMY_10", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Intersex = new ModConfigurationKey<bool>("Intersex", "Intersex", () => false);
         [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Naturist = new ModConfigurationKey<bool>("Naturist", "Naturist", () => false);
         [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Nonbinary = new ModConfigurationKey<bool>("Nonbinary", "Nonbinary", () => false);
-        [AutoRegisterConfigKey]
         private static ModConfigurationKey<bool> Polyamorous = new ModConfigurationKey<bool>("Polyamorous", "Polyamorous", () => false);
-        [AutoRegisterConfigKey]
-        private static ModConfigurationKey<bool> Transgender = new ModConfigurationKey<bool>("Transgender", "Transgender", () => false);
 
         [AutoRegisterConfigKey]
-        private static readonly ModConfigurationKey<dummy> DUMMY20 = new ModConfigurationKey<dummy>("DUMMY_29", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());
+        private static readonly ModConfigurationKey<dummy> DUMMY20 = new ModConfigurationKey<dummy>("DUMMY_29", $"<color={HEADER_TEXT_COLOR}></color>", () => new dummy());       
         [AutoRegisterConfigKey]
         private static readonly ModConfigurationKey<dummy> DUMMY11 = new ModConfigurationKey<dummy>("DUMMY_11", $"<align=center><color={HEADER_TEXT_COLOR}>[ Languages ]</color></align> ", () => new dummy());
         [AutoRegisterConfigKey]
@@ -445,36 +404,21 @@ namespace FasterBadges
             _resourceManager.RegisterBadge("Abrosexual",
                 new Uri("resdb:///7397dfa5f6eee2fa8e1a5c2cede16d858c09bd60adc376fef6c0ca0727bbdbc9.webp"),
                 Abrosexual);
-            _resourceManager.RegisterBadge("Aegosexual",
-                new Uri("resdb:///86da1550f4615939a96f86048c879a8cd60255173831a6218a6e80606035019d.png"),
-                Aegosexual);
             _resourceManager.RegisterBadge("Aliquasexual",
                 new Uri("resdb:///3782b6a2f2cd194ec9e3da23f8b09ce348d2c98c3fc6fd79570c42ac79393642.webp"),
                 Aliquasexual);
             _resourceManager.RegisterBadge("Androsexual",
                 new Uri("resdb:///27f3cf42c0fc39f4b2e9911e056909319a44fdcaeb7a43beb1e8e555ebf1ee0a.webp"),
                 Androsexual);
-            _resourceManager.RegisterBadge("Asexual",
-                new Uri("resdb:///880fe58cae85e2a74cf491b00cfb818e023b40ff4a135a588be6114b8af95b80.webp"),
-                Asexual);
             _resourceManager.RegisterBadge("Autosexual",
                 new Uri("resdb:///e0d1f42247998d5878820b97a3e072f66fa22e93e777d9df85c5e0350e0bcbf4.webp"),
                 Autosexual);
-            _resourceManager.RegisterBadge("Bisexual",
-                new Uri("resdb:///11c7f8a885c0ae089a1e60e0cf4e9d14da7c2f8f497b7c0865091675c4ce2c6d.webp"),
-                Bisexual);
             _resourceManager.RegisterBadge("Ceterosexual",
                 new Uri("resdb:///bb618bc8933179128f615ce890b78d18510fb51af704d7ddfdf93b1444b80725.webp"),
                 Ceterosexual);
-            _resourceManager.RegisterBadge("Demisexual",
-                new Uri("resdb:///a9119f05cef46e8c10218b2b16954df0c082cb1e1f7b0ce4abd3b2088ed17bf8.webp"),
-                Demisexual);
             _resourceManager.RegisterBadge("Fraysexual",
                 new Uri("resdb:///cb5c469859d7830774efb0d4ddc0d3dfa6b32e7944259be2b0cae9cac5eb827f.webp"),
                 Fraysexual);
-            _resourceManager.RegisterBadge("GayGilbert",
-                new Uri("resdb:///537f62fdbdf1e6f4d807c3525ac19f7d6b959f2fe7c5ede2b6ac17e6fa06d773.webp"),
-                GayGilbert);
             _resourceManager.RegisterBadge("GayMaleFull",
                 new Uri("resdb:///7215acb9ae87241e122e5ecd5eecd96320e5a261f7421634b3b4c1f287ba26f9.webp"),
                 GayMaleFull);
@@ -484,9 +428,6 @@ namespace FasterBadges
             _resourceManager.RegisterBadge("Gay",
                 new Uri("resdb:///114e25ca8b823f670a3ba7c5bea1b1f100f28153c0637535ee36dd0a80bfd79e.webp"),
                 Gay);
-            _resourceManager.RegisterBadge("Graysexual",
-                new Uri("resdb:///5abbc8354acd9d8b997aaac98ac1489a4050325a18e5bb4a26338c63ae29febf.webp"),
-                Graysexual);
             _resourceManager.RegisterBadge("Gynesexual",
                 new Uri("resdb:///46627201f0c3063048180d77f6317643f9fa4793e94171e0ecd19f51d4ab77df.png"),
                 Gynesexual);
@@ -496,54 +437,21 @@ namespace FasterBadges
             _resourceManager.RegisterBadge("Kalossexual",
                 new Uri("resdb:///64faa58dfbde77d7fb3f985404c700068d25e7f03030bdf72f44712dd9fd9fd3.webp"),
                 Kalossexual);
-            _resourceManager.RegisterBadge("Lesbian",
-                new Uri("resdb:///25bf8ee7717cdd0bf919e653526deb97066e380d58bdc6dc0bec6d790218b78a.webp"),
-                Lesbian);
             _resourceManager.RegisterBadge("Omnisexual",
                 new Uri("resdb:///403b80574f33d18c66dd8b8442d687b7458bdee109de5dcec0890b7364ee9843.png"),
                 Omnisexual);
-            _resourceManager.RegisterBadge("Pansexual",
-                new Uri("resdb:///287ded390e7dc3cc39d7edec3b8bf9ee2fd7ef5390df8cae036c326580f6971d.webp"),
-                Pansexual);
-            _resourceManager.RegisterBadge("Polysexual",
-                new Uri("resdb:///515d6210069e5e0a498894d93735ab14fbd68a183a47c1d71a96caa3aba1a786.webp"),
-                Polysexual);
             _resourceManager.RegisterBadge("Proligosexual",
                 new Uri("resdb:///c303e649d2b5fdbe966210350cbca4d394c155ac862a2a188c4a600c9e1418f5.webp"),
                 Proligosexual);
-            _resourceManager.RegisterBadge("Queer",
-                new Uri("resdb:///6a59a796a3762bf0fb3e89623dbfd02086089770fc4f04e4abcb99185e1420cd.webp"),
-                Queer);
-            _resourceManager.RegisterBadge("Agender",
-                new Uri("resdb:///921a4dd7f98e5c9ac0bd030184cd6d573a4f21cd9d74db7c145edf03c412def6.webp"),
-                Agender);
-            _resourceManager.RegisterBadge("Aromantic",
-                new Uri("resdb:///8d7ac4b84b5b382688d24e6dd16d05a6e32dda22e09c6fbab48691f881c0bbc4.webp"),
-                Aromantic);
             _resourceManager.RegisterBadge("Demiromantic",
                 new Uri("resdb:///02f17173f19ee93bc9fd49cb5114a771832de982b6e2bd6189274b073d7d6999.webp "),
                 Demiromantic);
-            _resourceManager.RegisterBadge("Genderfluid",
-                new Uri("resdb:///d4c84d4bc7df6a2f81a51cde3d841dcd7553477cd22be85154f7ef266b57cc05.webp"),
-                Genderfluid);
-            _resourceManager.RegisterBadge("Genderqueer",
-                new Uri("resdb:///95c0a6bf841facff7d06dd317db281cd4a116e3e45fbc73e959eee977f235028.webp"),
-                Genderqueer);
-            _resourceManager.RegisterBadge("Intersex",
-                new Uri("resdb:///6b65cb069fb631f8fab2d68ca895293622dadd70ccbad3c712a149222127cfa4.webp"),
-                Intersex);
             _resourceManager.RegisterBadge("Naturist",
                 new Uri("resdb:///0083d37b8bee3ccff5d4a1b493368eb23ed85dc5e17a4c8e3fa2dda1f94bbafb.webp"),
                 Naturist);
-            _resourceManager.RegisterBadge("Nonbinary",
-                new Uri("resdb:///071cf2ec3f64978eba387b56954ed60b40d5765ca93ab695d7e0c5ac127d197b.webp"),
-                Nonbinary);
             _resourceManager.RegisterBadge("Polyamorous",
                 new Uri("resdb:///c599763137416fee3601cba1e69c621403eb5283579e20bde6bdf44a2babbe58.webp"),
                 Polyamorous);
-            _resourceManager.RegisterBadge("Transgender",
-                new Uri("resdb:///94c9fd36191472b0473dd6f4dbad2de0baeab0b6d83b72ca2285f0cd36e8cd4c.webp"),
-                Transgender);
             _resourceManager.RegisterBadge("AF",
                 new Uri("resdb:///f9f1c2142d6cce45f38729480a3a457f70774f48fcb915cf9e7db59f9dee5d54.png"),
                 AF);
