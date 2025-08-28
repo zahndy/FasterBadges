@@ -147,7 +147,7 @@ namespace FasterBadges
         public override String Name => "FasterBadges";
         public override String Author => "zahndy";
         public override String Link => "https://github.com/zahndy/FasterBadges";
-        public override String Version => "1.6.0";
+        public override String Version => "1.6.1";
 
         private static readonly BadgeResourceManager _resourceManager = new BadgeResourceManager();
         private static readonly AvatarBadgeHandler _avatarHandler = new AvatarBadgeHandler(blendMode, tint, maxSize);
@@ -543,7 +543,7 @@ namespace FasterBadges
                         bool value = (bool)Config.GetValue(configurationItemDefinition);
                         if (value)
                         {
-                            Msg("Adding badge: " + configurationItemDefinition.Name);
+                            //Msg("Adding badge: " + configurationItemDefinition.Name);
                             BadgesListNames.Add(configurationItemDefinition.Name);
                         }
                     }
@@ -553,7 +553,7 @@ namespace FasterBadges
 
         private void OnThisConfigurationChanged(ConfigurationChangedEvent configurationChangedEvent)
         {
-            Msg("Configuration Key Changed: " + configurationChangedEvent.Key.Name);
+           // Msg("Configuration Key Changed: " + configurationChangedEvent.Key.Name);
             if (configurationChangedEvent.Key == ENABLED)
             {
                 HandleEnabledStateChange();
@@ -593,8 +593,7 @@ namespace FasterBadges
                             {
                                 if (badge != null)
                                 {
-                                    Msg("Removing Custom Badge: " + badge.Name + " From: " +
-                                        (av.Slot.ActiveUser?.UserName ?? "Unknown User"));
+                                   // Msg("Removing Custom Badge: " + badge.Name + " From: " + (av.Slot.ActiveUser?.UserName ?? "Unknown User"));
                                     badge.Destroy();
                                 }
                             }
@@ -670,8 +669,7 @@ namespace FasterBadges
                         var hostBadge = av.BadgeTemplates.FindChild("Host", true, true, 1);
                         if (hostBadge != null)
                         {
-                            Msg("Deletign Host Badge: " + hostBadge.Name + " From: " +
-                                (av.Slot.ActiveUser?.UserName ?? "Unknown User"));
+                           // Msg("Deleting Host Badge: " + hostBadge.Name + " From: " + (av.Slot.ActiveUser?.UserName ?? "Unknown User"));
                             hostBadge.Destroy();
                         }
                         av.UpdateBadges();
@@ -698,7 +696,7 @@ namespace FasterBadges
             }
             if (Config.GetValue(SUPP))
             {
-                Msg("Attempting to delete Supporter Badge");
+               // Msg("Attempting to delete Supporter Badge");
                 foreach (var av in _avatarHandler.GetAvatars())
                 {
                     av.Slot.RunSynchronously(() =>
@@ -706,9 +704,7 @@ namespace FasterBadges
                         var suppBadgeTemplate = av.BadgeTemplates.FindChild("Supporter", true, true, 1);
                         if (suppBadgeTemplate != null)
                         {
-                            Msg("Deleting Supporter Badge: " + suppBadgeTemplate.Name + " From: " +
-                                (av.Slot.ActiveUser?.UserName ?? "Unknown User"));
-
+                           // Msg("Deleting Supporter Badge: " + suppBadgeTemplate.Name + " From: " + (av.Slot.ActiveUser?.UserName ?? "Unknown User"));
                             suppBadgeTemplate.Destroy();
                         }
                         av.UpdateBadges();
@@ -765,7 +761,7 @@ namespace FasterBadges
                                         "Extra Custom Badge-" + customBadge.Substring(customBadge.Length - 10, 5),
                                         blendMode, tint, TextureFilterMode.Bilinear, maxSize);
                                     badgesChanged = true;
-                                    Msg("Added Custom Badge to: " + av.Slot.Name + " From: " + av.Slot.ActiveUser.UserName);
+                                   // Msg("Added Custom Badge to: " + av.Slot.Name + " From: " + av.Slot.ActiveUser.UserName);
                                 }
                             }
 
